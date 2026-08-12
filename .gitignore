@@ -1,0 +1,24 @@
+# ---- IDE / 编辑器 ----
+.idea/
+.vscode/
+
+# ---- Qoder 缓存 ----
+.qoder/
+
+# ---- macOS ----
+.DS_Store
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ---- 环境变量（含 API Key，禁止提交）----
+.env
+
+# ---- 虚拟环境 ----
+.venv/
+venv/
