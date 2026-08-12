@@ -12,7 +12,7 @@
 模型负责思考，Harness 负责让思考变成可执行、可控、可扩展的行动。
 ```
 
-仓库包含三条学习线路和两份调研文档，覆盖从产品选型到工程实现的完整路径。
+仓库包含四条学习线路、一份可视化教程和两份调研文档，覆盖从产品选型到工程实现的完整路径。
 
 ---
 
@@ -31,6 +31,10 @@
 │
 ├── harness-tutorial/           # 线路 2：Harness 入门教程（概念导向）
 │   └── tutorial/               #   8 章：Task → Agent → Trace → Evaluate → Report
+│
+├── harness-visual-tutorial/    # 线路 2.5：Harness 可视化教程（图解 + 代码）
+│   ├── ch01 ~ ch10/            #   10 章，每章 2-3 张 PNG 图解
+│   └── images/                 #   28 张高清图解
 │
 ├── hello-agents-chapters/      # 线路 3：Hello Agents 课程（18 章全景）
 │   ├── ch01 ~ ch11/            #   LLM 基础、工具调用、Agent 范式、记忆、RAG…
@@ -72,6 +76,25 @@
 面向初学者的概念教程，帮你理解 Harness 各模块的职责边界：
 
 `Task → Agent Runner → Tool Registry → Trace Logger → Evaluator → Report`
+
+### 线路 2.5：Harness 可视化教程（图解 + 代码）
+
+**每章 2-3 张 PNG 图解**，用 Python + DeepSeek 从零搭建完整 Agent，10 章渐进式叠加。
+
+| 章节 | 主题 | 类比 |
+|------|------|------|
+| ch01 | 什么是 Harness | 实习生 + 办公环境 |
+| ch02 | Agent 循环 | 对讲机对话 |
+| ch03 | 工具调用 | 工具箱 |
+| ch04 | 权限系统 | 钥匙和门禁 |
+| ch05 | 记忆系统 | 笔记本 |
+| ch06 | 子代理 | 派助手查资料 |
+| ch07 | 错误处理 | 备用方案 |
+| ch08 | 上下文管理 | 桌面整理 |
+| ch09 | 完整组装 | 组装汽车 |
+| ch10 | 后续方向 | 升级路线 |
+
+适合**看图学习**的读者，代码可直接运行。详见 [harness-visual-tutorial/](harness-visual-tutorial/README.md)。
 
 ### 线路 3：Hello Agents 课程
 
@@ -115,6 +138,7 @@ python stage-1-让Agent行动起来/s01-agent-loop.py
 |------|---------|---------|
 | **快速路径** | 抓主线 | s01 → s02 → s03 → s06 → s08 → s10 → s15 |
 | **完整路径** | 系统学习 | s01 → s17 顺序阅读，每章 30-60 分钟 |
+| **图解入门** | 零基础看图 | harness-visual-tutorial ch01 → ch10 |
 | **产品选型** | 方案调研 | 先读 `agent-infra-products.md`，再按兴趣深入 |
 
 ---
