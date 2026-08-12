@@ -137,39 +137,49 @@ echo "DEEPSEEK_API_KEY=your-key-here" > .env
 
 ```python
 # --- 导入依赖 ---
-from openai import OpenAI          # OpenAI SDK（DeepSeek 兼容此接口）
-from dotenv import load_dotenv     # 从 .env 文件加载环境变量
+from openai import OpenAI          # DeepSeek 兼容 OpenAI SDK，所以用 openai 包
+from dotenv import load_dotenv     # 从 .env 文件加载环境变量（避免把 API Key 写在代码里）
 import os
 
-# --- 初始化客户端 ---
-load_dotenv()                      # 读取 .env 中的 DEEPSEEK_API_KEY
-client = OpenAI(
-    base_url="https://api.deepseek.com",  # DeepSeek API 地址
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
+# --- 初始化 DeepSeek 客户端 ---
+# 从 .env 文件加载 DEEPSEEK_API_KEY 等环境变量
+load_dotenv()
+
+# DeepSeek 兼容 OpenAI 协议，只需把 base_url 指向 DeepSeek 的服务地址
+deepseek_client = OpenAI(
+    base_url="https://api.deepseek.com",      # DeepSeek API 地址（替代 OpenAI 默认地址）
+    api_key=os.getenv("DEEPSEEK_API_KEY"),    # 从环境变量读取 API Key，不要硬编码
 )
 
 # --- 定义最小智能体函数 ---
 def chat(user_message: str, history: list = None) -> str:
-    """最简智能体：接收用户消息，返回 LLM 回复"""
-    # 构造消息列表，system 消息设定 AI 的角色
+    """最简智能体：接收用户消息，返回 LLM 回复。
+
+    参数:
+        user_message: 用户当前输入的文本
+        history: 之前的对话历史（可选，用于多轮对话）
+    返回:
+        LLM 生成的回复文本
+    """
+    # 构造消息列表，system 消息定义 Agent 的角色和行为风格
     messages = [
         {"role": "system", "content": "你是一个友好的旅行助手。"},
     ]
-    # 如果有历史对话，拼接到消息列表中（实现多轮对话）
+    # 如果有历史对话，拼接到消息列表中（实现多轮对话记忆）
     if history:
         messages.extend(history)
-    # 将用户当前消息追加到末尾
+    # 将用户当前消息追加到末尾（模型最后看到的就是这条）
     messages.append({"role": "user", "content": user_message})
 
-    # 调用 LLM 生成回复
-    response = client.chat.completions.create(
-        model="deepseek-chat",     # DeepSeek 的对话模型
-        messages=messages,
+    # 调用 DeepSeek API 生成回复
+    response = deepseek_client.chat.completions.create(
+        model="deepseek-chat",     # DeepSeek-V3 对话模型
+        messages=messages,         # 完整的消息列表（system + history + user）
     )
-    # 提取并返回模型的文本回复
+    # 提取模型的文本回复并返回
     return response.choices[0].message.content
 
-# --- 运行测试 ---
+# --- 运行测试：发一条消息给旅行助手 ---
 print(chat("我想去上海玩三天，帮我推荐景点"))
 ```
 
@@ -215,7 +225,7 @@ python main.py
 
 | 组件 | 作用 | 在 v0.1 中对应 |
 |------|------|---------------|
-| **大脑（LLM）** | 理解输入、推理决策 | `client.chat.completions.create()` |
+| **大脑（LLM）** | 理解输入、推理决策 | `deepseek_client.chat.completions.create()` |
 | **感知（Input）** | 接收外部信息 | `user_message` 参数 |
 | **行动（Tools）** | 与外部世界交互 | v0.1 还没有工具（只能回复文本） |
 | **记忆（Memory）** | 保存历史信息 | v0.1 还没有记忆（每次对话独立） |

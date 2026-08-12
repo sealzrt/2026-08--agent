@@ -186,19 +186,22 @@ Self-Attention 的核心思想可以用一个会议场景来理解：
 
 ```python
 # --- 导入依赖 ---
-from openai import OpenAI          # OpenAI SDK（DeepSeek 兼容此接口）
+from openai import OpenAI          # DeepSeek 兼容 OpenAI SDK，所以用 openai 包
 import os
-from dotenv import load_dotenv     # 从 .env 文件加载环境变量
+from dotenv import load_dotenv     # 从 .env 文件加载环境变量（避免把 API Key 写在代码里）
 
-# --- 初始化客户端 ---
-load_dotenv()                      # 读取 .env 中的 DEEPSEEK_API_KEY
-client = OpenAI(
-    base_url="https://api.deepseek.com",  # DeepSeek API 地址
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
+# --- 初始化 DeepSeek 客户端 ---
+# 从 .env 文件加载 DEEPSEEK_API_KEY 等环境变量
+load_dotenv()
+
+# DeepSeek 兼容 OpenAI 协议，只需把 base_url 指向 DeepSeek 的服务地址
+deepseek_client = OpenAI(
+    base_url="https://api.deepseek.com",      # DeepSeek API 地址（替代 OpenAI 默认地址）
+    api_key=os.getenv("DEEPSEEK_API_KEY"),    # 从环境变量读取 API Key，不要硬编码
 )
 
 # --- 基础调用示例 ---
-response = client.chat.completions.create(
+response = deepseek_client.chat.completions.create(
     model="deepseek-chat",         # DeepSeek 对话模型
     messages=[
         {"role": "system", "content": "你是一个旅行助手"},  # 系统角色设定
@@ -263,7 +266,7 @@ LLM 很可能算错。因为它不是在做数学运算，而是在"预测看起
 ```python
 # 对比不同 Temperature 值对输出的影响
 for temp in [0, 0.7, 1.5]:
-    response = client.chat.completions.create(
+    response = deepseek_client.chat.completions.create(
         model="deepseek-chat",
         messages=[{"role": "user", "content": "给我推荐一个旅游目的地"}],
         temperature=temp,          # 每次用不同的温度值
@@ -288,7 +291,7 @@ questions = [
     "257 × 389 = ?",             # 数学题：LLM 容易算错
 ]
 for q in questions:
-    resp = client.chat.completions.create(
+    resp = deepseek_client.chat.completions.create(
         model="deepseek-chat",
         messages=[{"role": "user", "content": q}],
         temperature=0,             # 用最低温度，尽量确定性输出

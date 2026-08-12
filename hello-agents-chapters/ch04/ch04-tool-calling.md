@@ -130,15 +130,16 @@ weather_tool = {
 ```python
 # --- 导入依赖 ---
 import json                            # 用于解析 LLM 返回的工具参数（JSON 格式）
-from openai import OpenAI              # OpenAI SDK（DeepSeek 兼容此接口）
+from openai import OpenAI              # DeepSeek 兼容 OpenAI SDK，所以用 openai 包
 from dotenv import load_dotenv         # 从 .env 文件加载环境变量
 import os
 
-# --- 初始化客户端 ---
+# --- 初始化 DeepSeek 客户端 ---
 load_dotenv()
-client = OpenAI(
-    base_url="https://api.deepseek.com",  # DeepSeek API 地址
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
+# DeepSeek 兼容 OpenAI 协议，只需把 base_url 指向 DeepSeek 的服务地址
+deepseek_client = OpenAI(
+    base_url="https://api.deepseek.com",      # DeepSeek API 地址
+    api_key=os.getenv("DEEPSEEK_API_KEY"),    # 从环境变量读取 API Key
 )
 
 # --- 工具定义：告诉 LLM 有哪些工具可用 ---
@@ -199,7 +200,7 @@ def agent_chat(user_message: str):
     ]
 
     # 第一步：发送消息 + 工具列表，让 LLM 决定是否调用工具
-    response = client.chat.completions.create(
+    response = deepseek_client.chat.completions.create(
         model="deepseek-chat",
         messages=messages,
         tools=tools,                   # 把工具列表传给 LLM
@@ -219,7 +220,7 @@ def agent_chat(user_message: str):
             })
 
         # 第三步：把工具结果交给 LLM，生成最终的自然语言回复
-        final = client.chat.completions.create(
+        final = deepseek_client.chat.completions.create(
             model="deepseek-chat",
             messages=messages,         # 包含完整历史：用户消息 + 工具调用 + 工具结果
         )

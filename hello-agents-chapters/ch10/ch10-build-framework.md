@@ -60,7 +60,7 @@ class LLMProvider(ABC):
 # --- DeepSeek 实现：通过 OpenAI 兼容接口调用 ---
 class DeepSeekProvider(LLMProvider):
     def __init__(self, model="deepseek-chat"):
-        self.client = OpenAI(                # 复用 OpenAI SDK
+        self.deepseek_client = OpenAI(                # 复用 OpenAI SDK，DeepSeek 兼容此接口
             base_url="https://api.deepseek.com",  # 指向 DeepSeek
             api_key=os.getenv("DEEPSEEK_API_KEY"),
         )
@@ -70,7 +70,7 @@ class DeepSeekProvider(LLMProvider):
         kwargs = {"model": self.model, "messages": messages}
         if tools:                            # 如果传入了工具列表，一起传给 LLM
             kwargs["tools"] = tools
-        resp = self.client.chat.completions.create(**kwargs)
+        resp = self.deepseek_client.chat.completions.create(**kwargs)
         return resp.choices[0].message       # 返回 LLM 的回复消息对象
 
 # --- 本地模型实现：支持 Ollama / vLLM 等本地部署方案 ---
