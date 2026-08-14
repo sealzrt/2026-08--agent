@@ -39,6 +39,207 @@ UI 或 SDK 作为消费者
 
 可以把它理解为：对话循环不是一次性吐出答案，而是持续产生事件流。每一次 `yield` 都像心跳，把 Agent 当前正在发生的事情推给外层。
 
+### `async function*` 语法拆解
+
+如果你对 JavaScript / TypeScript 的生成器不熟，这个语法一开始会很绕。可以把 `async function*` 拆成三部分理解：
+
+| 语法片段 | 含义 | 在 Agent 循环里的作用 |
+|----------|------|------------------------|
+| `async` | 函数内部可以使用 `await` | 等待模型流、工具执行、文件 IO、网络请求 |
+| `function*` | 这是生成器函数，可以多次 `yield` | 一边执行一边向外发出事件 |
+| `async function*` | 异步生成器函数，返回 `AsyncGenerator` | 同时支持异步等待和流式产出 |
+
+这里要特别区分：ES6 的普通 Generator 写法确实是 `function*`，不需要 `async`。`async function*` 是后来的异步生成器语法，用来解决“生成器内部也要等待异步操作”的问题。
+
+两者的差异可以这样看：
+
+| 写法 | 返回对象 | `next()` 返回什么 | 函数内部能否直接 `await` | 消费方式 | 适合场景 |
+|------|----------|-------------------|---------------------------|----------|----------|
+| `function* gen()` | `Generator` | `{ value, done }` | 不能 | `for...of` | 同步序列，例如遍历、状态机、惰性计算 |
+| `async function* gen()` | `AsyncGenerator` | `Promise<{ value, done }>` | 可以 | `for await...of` | 异步事件流，例如模型流、工具进度、网络数据 |
+
+普通 Generator 示例：
+
+```typescript
+function* count() {
+  yield 1
+  yield 2
+  return 3
+}
+
+const iterator = count()
+console.log(iterator.next()) // { value: 1, done: false }
+```
+
+异步 Generator 示例：
+
+```typescript
+async function* countSlowly() {
+  yield 1
+  await new Promise(resolve => setTimeout(resolve, 100))
+  yield 2
+  return 3
+}
+
+const iterator = countSlowly()
+console.log(await iterator.next()) // { value: 1, done: false }
+```
+
+所以你看到 `async function*` 觉得奇怪，是因为它把两个机制叠在了一起：
+
+```text
+function* 负责“多次产出”
+async 负责“每一步可以等待异步结果”
+```
+
+Agent 对话循环刚好同时需要这两个能力：模型输出是流式的，需要多次产出；工具、Hook、MCP、文件系统又都是异步的，需要 `await`。
+
+### 为什么终端里能一行一行流式输出
+
+你在一些 Agent CLI 里看到的“内容不断冒出来”，通常不是 `async function*` 单独完成的，而是三层机制叠加出来的：
+
+```text
+LLM API 流式返回 token/chunk
+        ↓
+Agent Harness 把每个 chunk 转成事件 yield 出去
+        ↓
+终端 UI 收到事件后立即渲染
+```
+
+也就是说，真正产生连续内容的来源通常是模型 API 的 streaming response。`async function*` 的作用是把这些连续到来的小片段，按顺序交给外层消费者。
+
+简化后可以写成这样：
+
+```typescript
+async function* runConversation() {
+  const stream = callLLM({ stream: true })
+
+  for await (const chunk of stream) {
+    yield {
+      type: "assistant_text_delta",
+      text: chunk.text
+    }
+  }
+
+  return "done"
+}
+```
+
+外层消费这些事件时，如果用 `console.log`，每个事件都会换行：
+
+```typescript
+for await (const event of runConversation()) {
+  console.log(event.text)
+}
+```
+
+但真实终端 UI 更常见的是直接写入标准输出：
+
+```typescript
+for await (const event of runConversation()) {
+  if (event.type === "assistant_text_delta") {
+    process.stdout.write(event.text)
+  }
+}
+```
+
+`process.stdout.write` 不会自动换行，所以如果模型分三次返回：
+
+```text
+"我们"
+"来分析"
+"这个问题"
+```
+
+终端可以逐步显示为：
+
+```text
+我们来分析这个问题
+```
+
+用户看到的效果就是“回答正在实时生成”。这也解释了为什么 Agent Harness 要保留流式事件，而不是等模型完整回答结束后再一次性渲染。
+
+因此要分清三件事：
+
+| 层次 | 负责什么 |
+|------|----------|
+| 模型流 | 真正持续产生 token 或 chunk |
+| `async function*` | 把 chunk 包装成有序事件流 |
+| 终端 UI | 收到事件后立即显示、更新或折叠 |
+
+如果 `runConversation()` 内部只在最后 `return`，那外层再怎么写 `while + next()` 也不会有流式效果。必须是内部真的多次 `yield`，外层又及时消费和渲染，用户才会看到内容持续输出。
+
+最小例子：
+
+```typescript
+async function* runConversation(): AsyncGenerator<string, string, void> {
+  yield "开始请求模型"
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  yield "收到一段文本"
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  yield "工具执行完成"
+  return "对话结束"
+}
+```
+
+这个类型 `AsyncGenerator<string, string, void>` 可以拆成：
+
+```typescript
+AsyncGenerator<YieldValue, ReturnValue, NextValue>
+```
+
+对应到上面的例子：
+
+| 类型位置 | 示例值 | 含义 |
+|----------|--------|------|
+| `YieldValue` | `string` | 每次 `yield` 给外层的事件类型 |
+| `ReturnValue` | `string` | 生成器结束时 `return` 的最终结果类型 |
+| `NextValue` | `void` | 外层通过 `next(value)` 传回生成器内部的值，这里不用 |
+
+消费异步生成器通常使用 `for await...of`：
+
+```typescript
+for await (const event of runConversation()) {
+  console.log(event)
+}
+```
+
+但这里有一个重要细节：`for await...of` 只会消费 `yield` 出来的值，不会把最终 `return` 值作为循环项吐出来。也就是说，上面的循环会打印：
+
+```text
+开始请求模型
+收到一段文本
+工具执行完成
+```
+
+但不会打印 `对话结束`。如果 Harness 需要拿到最终终止原因，就要由外层驱动器手动读取最后一次 `next()` 的结果，或者用封装好的 runner 捕获 `done: true` 时的 `value`：
+
+```typescript
+const iterator = runConversation()
+
+while (true) {
+  const step = await iterator.next()
+
+  if (step.done) {
+    const terminalReason = step.value
+    console.log("return:", terminalReason)
+    break
+  }
+
+  console.log("yield:", step.value)
+}
+```
+
+这正好对应 Agent Harness 的分工：
+
+- `yield`：告诉 UI、日志系统、调用方“过程中发生了什么”。
+- `await`：等待模型、工具、Hook、MCP 等外部异步动作完成。
+- `return`：告诉主循环“为什么这一轮结束”。
+
+所以 `async function*` 不是炫技语法，而是把“异步等待 + 流式输出 + 最终终止状态”放进同一个线性控制流里。
+
 ### 函数签名与 AsyncGenerator 模式
 
 原课程强调，对话循环入口的函数签名本身就暴露了设计意图：它接收一个结构化参数对象，向外产出多种事件，最终返回一个终结状态。
