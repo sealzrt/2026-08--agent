@@ -457,6 +457,89 @@ const setState = useSetAppState()
 
 这里的设计和配置系统一样，都在追求可解释性：每个组件为什么重渲染、每个状态字段由谁修改，都应该能说清楚。
 
+## 5.5 关键流程图补强
+
+### 图一：六层配置优先级图
+
+配置系统最容易混淆的是“谁覆盖谁”。可以先记住：越靠后越有最终决定权，但 `policySettings` 又有特殊的首个非空策略。
+
+```mermaid
+flowchart TB
+  P0[pluginSettings<br/>插件默认值] --> P1[userSettings<br/>用户偏好]
+  P1 --> P2[projectSettings<br/>项目共享设置]
+  P2 --> P3[localSettings<br/>本地私有设置]
+  P3 --> P4[flagSettings<br/>CLI 临时设置]
+  P4 --> P5[policySettings<br/>企业策略]
+  P5 --> Final[最终有效配置]
+```
+
+学习时不要只背顺序，还要判断配置项的性质：数组、对象和标量的合并方式不同；安全敏感配置还会排除不可信来源。
+
+### 图二：配置合并流程图
+
+```mermaid
+flowchart TD
+  Start[收集所有配置源] --> Normalize[解析 JSON / 默认值 / schema]
+  Normalize --> Sort[按优先级排序]
+  Sort --> Each[逐项合并]
+  Each --> Kind{字段类型}
+  Kind -->|数组| Array[拼接并去重]
+  Kind -->|对象| Object[深度合并]
+  Kind -->|标量| Scalar[高优先级覆盖低优先级]
+  Array --> Policy{是否进入策略字段}
+  Object --> Policy
+  Scalar --> Policy
+  Policy -->|否| Final[生成最终配置]
+  Policy -->|是| FirstNonNull[首个非空策略源胜出]
+  FirstNonNull --> Final
+```
+
+这张图能帮助你分析练习题：先找来源，再看优先级，最后看字段类型。不要把所有字段都当成简单覆盖。
+
+### 图三：企业策略单一权威模型
+
+企业策略和项目配置的关键差异是可信边界不同。项目配置可能来自仓库，策略配置来自组织管理面。
+
+```mermaid
+flowchart LR
+  Repo[项目仓库<br/>可能不可信] --> Project[projectSettings]
+  User[开发者机器] --> UserSettings[userSettings / localSettings]
+  CLI[命令行参数] --> Flag[flagSettings]
+  Admin[企业管理员] --> Policy[policySettings]
+
+  Project --> Guard[安全敏感决策]
+  UserSettings --> Guard
+  Flag --> Guard
+  Policy --> Guard
+  Guard --> Decision[允许 / 阻止 / 限制]
+
+  Project -.敏感场景排除.-> Decision
+  Policy ==> Decision
+```
+
+理解这个模型后，就能解释为什么 `projectSettings` 虽然方便共享，但不能作为企业安全底线的唯一依据。
+
+### 图四：AppState 数据流图
+
+配置加载完成后不会停在文件层，它会进入运行时状态，并影响 UI、权限、模型选择和扩展系统。
+
+```mermaid
+flowchart TB
+  Config[最终配置] --> Init[初始化 AppState]
+  Runtime[运行时事件] --> Update[不可变 setState]
+  Init --> Store[Store]
+  Update --> Store
+  Store --> Selector[selector 选择字段]
+  Selector --> UI[React CLI 组件]
+  Selector --> Loop[对话主循环]
+  Selector --> Permission[权限与工具可见性]
+  Selector --> Extension[插件 / MCP / Agent 协作]
+  UI --> Action[用户操作]
+  Action --> Update
+```
+
+学习重点是单向数据流：配置和事件改变状态，组件和子系统通过 selector 读取状态，读取方不应该偷偷修改全局对象。
+
 ## 实战练习
 
 ### 练习 1：配置合并预测

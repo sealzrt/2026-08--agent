@@ -473,6 +473,103 @@ Agent 一旦有执行能力，安全必须在工具可见性、参数校验、�
 
 后续所有高级机制，都是在这个基础上继续增强。
 
+## 1.9 关键流程图补强
+
+### 图一：Chatbot 与 Agent Harness 的边界差异
+
+这张图用来建立第一章最重要的直觉：Chatbot 的核心产物是文本回复，Agent Harness 的核心产物是“受控行动”。
+
+```mermaid
+flowchart LR
+  U[用户意图] --> C1[Chatbot]
+  C1 --> R1[自然语言回答]
+
+  U --> H[Agent Harness]
+  H --> L[LLM 推理]
+  L --> P[行动计划]
+  P --> T[工具调用]
+  T --> G[权限与安全边界]
+  G --> E[外部环境变化]
+  E --> O[工具结果回填]
+  O --> L
+  L --> R2[最终回答或下一步行动]
+```
+
+学习时可以这样判断两者差异：如果系统只需要“说清楚”，它更接近 Chatbot；如果系统需要“安全地做事情，并能解释为什么这样做”，它就进入了 Harness 领域。
+
+### 图二：Claude Code 总架构的学习版视图
+
+原课程会从多个源码模块展开，这里先给一个学习版总图，方便你把后续章节放回同一个架构中。
+
+```mermaid
+flowchart TB
+  CLI[CLI 入口与交互界面] --> Loop[对话主循环]
+  Loop --> Model[LLM 查询引擎]
+  Model --> ToolUse[工具调用请求]
+  ToolUse --> Registry[工具注册中心]
+  Registry --> Permission[权限管线]
+  Permission --> Runner[工具执行器]
+  Runner --> Result[工具结果]
+  Result --> Context[上下文拼装]
+  Context --> Loop
+
+  Config[设置与配置] --> Loop
+  Memory[记忆系统] --> Context
+  Hooks[钩子系统] --> Permission
+  Hooks --> Runner
+  Skills[技能系统] --> Context
+  MCP[MCP 外部能力] --> Registry
+  Subagent[Subagent / Fork] --> Loop
+  Coordinator[Coordinator] --> Subagent
+```
+
+这张图不是精确源码依赖图，而是学习路线图。第 2-4 章讲主循环、工具和权限；第 5-8 章讲配置、记忆、上下文和 Hook；第 9-12 章讲高级扩展；第 13-15 章讲性能、流程和自建 Harness。
+
+### 图三：五大原则贯穿全书索引图
+
+第一章的五个原则不是口号，而是后续机制的解释框架。
+
+```mermaid
+flowchart LR
+  P1[异步流式优先] --> C2[第2章 对话循环]
+  P1 --> C13[第13章 流式与性能]
+
+  P2[安全边界内嵌] --> C3[第3章 工具系统]
+  P2 --> C4[第4章 权限管线]
+  P2 --> C8[第8章 Hook]
+
+  P3[缓存感知设计] --> C6[第6章 记忆]
+  P3 --> C7[第7章 上下文]
+  P3 --> C13
+
+  P4[渐进式能力扩展] --> C9[第9章 Subagent]
+  P4 --> C11[第11章 Skill]
+  P4 --> C12[第12章 MCP]
+
+  P5[不可变状态流转] --> C5[第5章 配置与状态]
+  P5 --> C14[第14章 Plan Mode]
+  P5 --> C15[第15章 自建 Harness]
+```
+
+读后续章节时，可以不断追问：这个机制主要服务哪条原则？如果找不到答案，说明你还没有抓到它的设计动机。
+
+### 图四：最小 Harness 能力分层图
+
+如果你想自研 Harness，不要一开始就追求完整 Claude Code。可以把能力分成三层理解。
+
+```text
+第 3 层：高级协作与生态
+  Skills / MCP / Subagent / Coordinator / Hooks 编排 / 企业策略
+
+第 2 层：可靠工程能力
+  权限管线 / 上下文管理 / 记忆系统 / 流式输出 / 错误恢复 / 状态管理
+
+第 1 层：最小可用闭环
+  用户输入 -> LLM -> 工具调用 -> 工具执行 -> 结果回填 -> 下一轮
+```
+
+第一层让系统能跑起来；第二层让系统可控、可恢复、可长期使用；第三层让系统可扩展、可协作、可组织化落地。
+
 ## 关键要点总结
 
 本章建立的是理解全书的概念框架。

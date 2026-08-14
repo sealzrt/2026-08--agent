@@ -8,6 +8,7 @@
 
 补充文件：
 
+- [architecture-learning-map.md](architecture-learning-map.md)：全书架构学习地图
 - [enrichment-priority.md](enrichment-priority.md)：一到十二章后续加厚优先级清单
 
 ## 映射总览

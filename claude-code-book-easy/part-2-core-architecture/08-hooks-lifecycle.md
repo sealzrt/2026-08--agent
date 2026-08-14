@@ -511,6 +511,94 @@ flowchart TD
 
 这套配置覆盖了完整生命周期：启动时记录环境，删除前做安全检查，写文件时用模型审查风险，Bash 执行后异步上报审计系统，响应停止时检查任务是否真的完成，会话结束时写摘要。
 
+## 8.6 关键流程图补强
+
+### 图一：Hook 生命周期总图
+
+Hook 的核心不是“脚本能不能跑”，而是“在 Agent 生命周期的哪个点获得干预权”。
+
+```mermaid
+flowchart TD
+  Start[SessionStart] --> User[UserPromptSubmit]
+  User --> Loop[对话主循环]
+  Loop --> PreTool[PreToolUse]
+  PreTool --> Decision{是否允许工具?}
+  Decision -->|block| Block[阻止并向模型/用户反馈]
+  Decision -->|allow| Tool[执行工具]
+  Tool --> PostTool[PostToolUse]
+  PostTool --> Loop
+  Loop --> Stop[Stop]
+  Stop --> Continue{continue / asyncRewake?}
+  Continue -->|继续| Loop
+  Continue -->|结束| End[SessionEnd]
+```
+
+读 Hook 章节时，先定位事件点，再判断它是同步门禁、异步通知、上下文注入，还是结束前复核。
+
+### 图二：Hook 响应协议图
+
+```mermaid
+flowchart LR
+  Hook[Hook 执行结果] --> Exit[退出码]
+  Hook --> Json[JSON 响应]
+  Json --> Decision[decision / reason]
+  Json --> Specific[hookSpecificOutput]
+  Json --> Context[additionalContext]
+  Json --> Continue[continue]
+
+  Exit --> Merge[统一解释层]
+  Decision --> Merge
+  Specific --> Merge
+  Context --> Merge
+  Continue --> Merge
+  Merge --> Effect[阻止 / 允许 / 注入上下文 / 唤醒模型 / 结束]
+```
+
+退出码适合表达粗粒度结果，JSON 适合表达结构化意图。两者最好表达一致含义，否则会增加调试成本。
+
+### 图三：退出码与 JSON 决策关系图
+
+```text
+退出码 0 + 无 JSON 决策
+  -> 默认通过，继续原流程
+
+退出码 0 + JSON decision=block
+  -> 结构化阻止，reason 应说明原因
+
+退出码 2 + stderr 文本
+  -> 传统阻止方式，文本回传给模型或用户
+
+退出码 0 + additionalContext
+  -> 不阻止，只给模型补充上下文
+
+Stop Hook + continue=true / asyncRewake
+  -> 当前回答结束后，可能重新唤醒模型继续处理
+```
+
+学习时不要死记每个字段，而要问：这个 Hook 是要“拦住动作”，还是“补充信息”，还是“记录旁路日志”。
+
+### 图四：企业安全审计 Hook 案例图
+
+```mermaid
+flowchart TB
+  Dev[开发者请求修改/执行] --> Pre[PreToolUse 安全门禁]
+  Pre --> Risk{是否命中敏感路径/命令?}
+  Risk -->|低风险| Run[执行工具]
+  Risk -->|中风险| LLM[LLM 审查 Hook]
+  Risk -->|高风险| Block[直接阻止]
+  LLM --> Review{审查通过?}
+  Review -->|否| Block
+  Review -->|是| Run
+  Run --> Post[PostToolUse 异步审计]
+  Post --> Audit[审计系统]
+  Run --> Stop[Stop 验证测试/完成度]
+  Stop --> Done{是否满足退出条件?}
+  Done -->|否| Rewake[唤醒模型补救]
+  Done -->|是| End[结束会话]
+```
+
+这类方案体现 Hook 的组合价值：前置门禁降低风险，后置审计保留证据，结束检查保证任务没有半途停下。
+
 ## 实战练习
 
 **练习 1：配置安全审查钩子**

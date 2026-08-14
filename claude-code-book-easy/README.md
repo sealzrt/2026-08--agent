@@ -39,6 +39,7 @@ claude-code-book-easy/
 └── appendices/
     ├── source-mapping.md
     ├── glossary.md
+    ├── architecture-learning-map.md
     └── enrichment-priority.md
 ```
 
@@ -58,6 +59,7 @@ claude-code-book-easy/
 - [00-preface.md](00-preface.md)：前言导读
 - [appendices/source-mapping.md](appendices/source-mapping.md)：原课程章节映射
 - [appendices/glossary.md](appendices/glossary.md)：核心术语表
+- [appendices/architecture-learning-map.md](appendices/architecture-learning-map.md)：全书架构学习地图
 - [appendices/enrichment-priority.md](appendices/enrichment-priority.md)：后续加厚优先级清单
 
 后续再按原课程章节逐章补充易学版导读和拆解。

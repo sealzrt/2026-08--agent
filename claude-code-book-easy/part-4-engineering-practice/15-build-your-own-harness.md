@@ -671,3 +671,57 @@ query_chain_id
 第 3 周: context + usage/cost
 第 4 周: hooks / skill / MCP 选一项
 ```
+
+### 图 7：真实任务穿透图
+
+以“修复一个线上 bug”为例，一个成熟 Harness 不会只调用模型生成答案，而是让任务穿过多个运行时层：
+
+```mermaid
+flowchart TD
+  A[用户描述 bug] --> B[Plan 模式明确范围]
+  B --> C[对话循环构造上下文]
+  C --> D[工具系统读取代码和日志]
+  D --> E[权限管线判断风险]
+  E --> F[执行 Read / Grep / Bash / Edit]
+  F --> G[工具结果回填 messages]
+  G --> H{上下文是否过大}
+  H -- 是 --> I[压缩或阶段总结]
+  H -- 否 --> J[继续推理]
+  I --> J
+  J --> K[运行测试或验证命令]
+  K --> L[Verification Agent 独立检查]
+  L --> M[输出修复结果、风险和验证证据]
+```
+
+这张图适合用来检查自研 Harness 是否完整：
+
+- 只有模型调用，没有工具系统：只能回答，不能行动。
+- 有工具系统，没有权限管线：可以行动，但边界不清。
+- 有权限管线，没有上下文管理：长任务会失控。
+- 有实现，没有验证 Agent 或 trace：很难证明任务真的完成。
+
+### 图 8：数据生命周期总图
+
+```text
+用户输入
+  -> messages
+  -> context selection
+  -> model request
+  -> tool_use
+  -> permission decision
+  -> tool_result
+  -> updated messages
+  -> compact summary
+  -> memory candidate
+  -> trace / usage / cache metrics
+```
+
+理解这条生命周期，能区分几个容易混淆的词：
+
+| 概念 | 作用 |
+|------|------|
+| `messages` | 会话历史和工具结果回填位置 |
+| `context` | 本轮实际送进模型的信息 |
+| `memory` | 跨会话长期保存的信息 |
+| `trace` | 复盘执行过程的证据 |
+| `usage` | 成本、缓存和预算控制依据 |

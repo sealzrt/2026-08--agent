@@ -458,6 +458,83 @@ flowchart TD
 
 如果任务需要研究、综合、实施、验证多个阶段，并且工作者之间需要共享中间发现，选 Coordinator。如果只是让多个子任务从同一上下文出发各自搜索或验证，选 Fork。
 
+## 10.8 关键流程图补强
+
+### 图一：Coordinator 与 Fork 的选择图
+
+```mermaid
+flowchart TD
+  Task[一个复杂任务] --> NeedShare{是否需要共享中间成果?}
+  NeedShare -->|否| Independent{子任务是否彼此独立?}
+  Independent -->|是| Fork[Fork / Subagent 并行分析]
+  Independent -->|否| Single[单 Agent 顺序推进]
+  NeedShare -->|是| NeedPlan{是否需要统一规格和整合?}
+  NeedPlan -->|是| Coordinator[Coordinator 模式]
+  NeedPlan -->|否| Scratch[简单共享文档或人工协调]
+```
+
+Fork 更像“复制上下文后各自探索”，Coordinator 更像“有项目经理的团队协作”。选择错误会带来重复劳动、结果无法合并或成本过高。
+
+### 图二：团队创建与删除流程图
+
+```mermaid
+flowchart TD
+  Create[TeamCreateTool] --> Spec[读取团队规格]
+  Spec --> Space[创建 Scratchpad]
+  Space --> Workers[创建 Worker 上下文/工作区]
+  Workers --> Assign[分配任务]
+  Assign --> Active[团队运行中]
+  Active --> Delete[TeamDeleteTool]
+  Delete --> Check{是否还有活跃 Worker?}
+  Check -->|有| Refuse[拒绝删除或先停止 Worker]
+  Check -->|无| Archive[归档结果与报告]
+  Archive --> CleanScratch[清理 Scratchpad]
+  CleanScratch --> CleanWorktree[清理工作区]
+  CleanWorktree --> Removed[团队删除完成]
+```
+
+删除团队不是简单删目录。安全顺序是先确认没有活跃 Worker，再归档结果，最后清理资源。
+
+### 图三：Scratchpad 协作流
+
+```mermaid
+sequenceDiagram
+  participant C as Coordinator
+  participant W1 as Research Worker
+  participant W2 as Implementation Worker
+  participant S as Scratchpad
+
+  C->>W1: 分配研究任务
+  W1->>S: 写入 research-notes.md
+  C->>S: 读取研究发现
+  C->>S: 写入 implementation-spec.md
+  C->>W2: 按规格实施
+  W2->>S: 写入 progress-report.md
+  C->>S: 汇总进度与风险
+  C->>W2: 调整任务或要求验证
+```
+
+Scratchpad 的重点是“中间成果持久化”。如果没有它，Coordinator 很容易只能依赖一次性消息，难以做跨阶段综合。
+
+### 图四：Worker 失败恢复流程图
+
+```mermaid
+flowchart TD
+  Notify[Worker 返回失败通知] --> Read[读取失败报告和部分成果]
+  Read --> Type{失败类型}
+  Type -->|缺上下文| AddContext[补充规格/文件/约束后重试]
+  Type -->|能力不足| Escalate[换更强模型或更细任务]
+  Type -->|外部环境问题| Pause[暂停相关任务并修复环境]
+  Type -->|规格冲突| Replan[Coordinator 重写实施规格]
+  AddContext --> Reassign[重新分配 Worker]
+  Escalate --> Reassign
+  Pause --> Reassign
+  Replan --> Reassign
+  Reassign --> Verify[验证部分成果是否可继续使用]
+```
+
+失败恢复的关键不是“重试一次”，而是先分类失败原因，再决定是补上下文、换执行者、修环境还是重写规格。
+
 ## 易学解释：Coordinator 的核心价值
 
 Coordinator 模式解决的不是“让更多 Agent 跑起来”，而是“让多个 Agent 的工作结果能被可靠整合”。

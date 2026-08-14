@@ -598,6 +598,83 @@ hooks:
 
 这种组合适合把“执行前检查”和“执行后验证”制度化。不过 Hook 失败时如何处理要写清楚：是立即停止、提示用户，还是继续但标记风险。
 
+## 11.6 关键流程图补强
+
+### 图一：Skill 加载优先级图
+
+```mermaid
+flowchart TB
+  Builtin[内置 Skills] --> Merge[能力池合并]
+  User[用户级 Skills] --> Merge
+  Project[项目级 Skills] --> Merge
+  Legacy[旧版 Commands] --> Merge
+  Plugin[插件 Skills] --> Merge
+  MCP[MCP 间接注册 Skills] --> Merge
+  Merge --> Validate[frontmatter / 路径 / 权限校验]
+  Validate --> Index[建立可触发索引]
+  Index --> Runtime[运行时按任务选择]
+```
+
+这张图强调：Skill 不是单一来源。它可能来自内置能力、用户目录、项目目录、插件或 MCP，因此加载阶段必须处理去重、校验、信任边界和错误收集。
+
+### 图二：Skill 目录发现流程图
+
+```mermaid
+flowchart TD
+  Start[启动或刷新 Skills] --> Paths[收集候选路径]
+  Paths --> Gitignore{是否被 gitignore 排除?}
+  Gitignore -->|是| Skip[跳过]
+  Gitignore -->|否| HasFile{是否存在 SKILL.md?}
+  HasFile -->|否| Skip
+  HasFile -->|是| Parse[解析 frontmatter]
+  Parse --> Valid{字段是否有效?}
+  Valid -->|否| Error[记录错误但不中断整体加载]
+  Valid -->|是| Condition{是否条件技能?}
+  Condition -->|是| ConditionalPool[进入条件池]
+  Condition -->|否| ActivePool[进入默认技能池]
+```
+
+插件和第三方技能可能有质量问题，所以加载器应该“尽量可用”：坏的技能被记录，好的技能继续加载。
+
+### 图三：`$ARGUMENTS` 与命名参数展开流程
+
+```mermaid
+flowchart LR
+  Invoke[用户触发 Skill] --> Input[原始输入参数]
+  Input --> Mode{参数声明方式}
+  Mode -->|$ARGUMENTS| Raw[整体原样注入]
+  Mode -->|命名参数| Split[按声明字段拆分]
+  Split --> Missing{是否缺参数?}
+  Missing -->|是| Ask[先向用户确认]
+  Missing -->|否| Replace[替换 $method 等占位符]
+  Raw --> Prompt[生成最终 Skill Prompt]
+  Replace --> Prompt
+  Ask --> Prompt
+```
+
+`$ARGUMENTS` 灵活但结构弱；命名参数更清晰，但必须处理缺失和歧义。学习时可以把它类比成函数的 `...args` 和具名形参。
+
+### 图四：Skill、Plugin、MCP 的边界对比图
+
+```text
+Skill
+  作用：给模型一套任务执行流程和局部知识
+  形态：SKILL.md + 可选参考文件
+  重点：何时触发、允许哪些工具、如何执行
+
+Plugin
+  作用：打包分发一组扩展能力
+  形态：插件目录，可包含 Skills、Agents、Hooks、配置
+  重点：安装、缓存、版本、来源信任
+
+MCP
+  作用：把外部服务能力接入 Harness
+  形态：外部服务器暴露 tools/resources/prompts
+  重点：连接、发现、命名映射、权限与外部边界
+```
+
+一句话区分：Skill 教模型“怎么做”，Plugin 负责“怎么打包分发”，MCP 负责“怎么接外部能力”。
+
 ## 实战练习
 
 ### 练习 1：创建一个自定义项目级技能

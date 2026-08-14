@@ -404,6 +404,87 @@ flowchart TD
 
 这种做法在可靠性和效率之间取平衡。完全不信任记忆会让记忆系统失去价值；完全相信记忆又会被过期信息误导。把记忆当线索，是更稳妥的中间道路。
 
+## 6.5 关键流程图补强
+
+### 图一：四类记忆分类图
+
+记忆分类的核心问题不是“这句话重要吗”，而是“以后模型应该把它当成什么类型的线索”。
+
+```mermaid
+flowchart TD
+  Info[一条候选信息] --> Q1{描述谁?}
+  Q1 -->|用户稳定偏好/背景| User[user]
+  Q1 -->|团队或项目事实| Q2{是否是外部入口?}
+  Q2 -->|否| Project[project]
+  Q2 -->|是| Reference[reference]
+  Q1 -->|对未来行为的要求| Feedback[feedback]
+  Q1 -->|代码当前状态| Exclude[不写长期记忆<br/>回到仓库实时读取]
+```
+
+实操时优先排除：能从代码、配置、Git 或当前任务直接读到的信息，不要写进长期记忆。
+
+### 图二：后台 Fork 记忆提取流程
+
+自动提取记忆的价值在于“不阻塞主任务”，但它也必须受到权限和去重控制。
+
+```mermaid
+flowchart TD
+  Main[主 Agent 完成一轮对话] --> Need{是否可能产生新记忆?}
+  Need -->|否| Skip[跳过]
+  Need -->|是| Mutex{互斥锁可用?}
+  Mutex -->|否| Defer[延迟或跳过本轮提取]
+  Mutex -->|是| Fork[启动后台 Fork Agent]
+  Fork --> Scope[加载最小工具白名单]
+  Scope --> Extract[提取候选记忆]
+  Extract --> Dedup{是否已由主 Agent 写入?}
+  Dedup -->|是| Drop[丢弃重复候选]
+  Dedup -->|否| Validate[验证类型和内容边界]
+  Validate --> Write[写入记忆文件]
+  Write --> Index[更新 MEMORY.md 索引]
+```
+
+这张图也解释了为什么记忆提取和普通任务执行不同：它是后台维护行为，不应该扩大工具权限，也不应该改变用户当前任务的结果。
+
+### 图三：记忆文件生命周期扩展图
+
+第 6.4 节已经给出基础生命周期，这里把“索引、使用、过期处理”也放进去。
+
+```mermaid
+stateDiagram-v2
+  [*] --> Candidate: 对话中出现候选信息
+  Candidate --> Rejected: 可从仓库推导 / 太临时 / 太敏感
+  Candidate --> Draft: 类型与价值通过初筛
+  Draft --> Stored: 写入独立 Markdown 文件
+  Stored --> Indexed: MEMORY.md 写入摘要索引
+  Indexed --> Used: 后续任务检索并读取
+  Used --> Verified: 使用前验证当前性
+  Verified --> Active: 继续保留
+  Verified --> Updated: 发现已变化
+  Verified --> Deleted: 发现无价值或过期
+  Updated --> Indexed
+  Deleted --> [*]
+```
+
+记忆不是永久真理，而是可维护的知识资产。真正成熟的记忆系统必须允许更新和删除。
+
+### 图四：记忆注入上下文的决策图
+
+```mermaid
+flowchart TD
+  Task[当前用户任务] --> Search[检索 MEMORY.md 索引]
+  Search --> Match{是否有相关记忆?}
+  Match -->|否| None[不注入]
+  Match -->|是| Drift{是否可能过期?}
+  Drift -->|低风险| Inject[注入上下文]
+  Drift -->|高风险| Verify[先读仓库/外部状态验证]
+  Verify --> Valid{仍然成立?}
+  Valid -->|是| Inject
+  Valid -->|否| UpdateOrIgnore[忽略或提示更新记忆]
+  Inject --> Use[作为线索辅助决策]
+```
+
+这能避免一个常见误区：记忆可以减少重复解释，但不能替代当前事实验证。
+
 ## 实战练习
 
 ### 练习 1：记忆类型分类
