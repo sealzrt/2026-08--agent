@@ -766,3 +766,60 @@ Bridge 远程控制能力风险更高，因为它允许外部系统影响本地 
 8. MCP 安全依赖多层防御：配置作用域、企业审批、插件去重、IDE 白名单和运行时确认。
 9. Bridge 系统负责 IDE 和 claude.ai 的双向通信，核心难点是传输抽象、去重、控制协议、认证和多会话隔离。
 10. IDE 集成通过少数白名单工具提供实时诊断和执行能力；它增强上下文感知，但不应绕开权限体系。
+
+## 12.5 关键流程图补强
+
+### 图 1：MCP 连接状态机
+
+```mermaid
+stateDiagram-v2
+  [*] --> Pending
+  Pending --> Connected
+  Pending --> NeedsAuth
+  Pending --> Failed
+  NeedsAuth --> Connected
+  Connected --> Failed
+  Failed --> Pending: retry
+  Connected --> Disabled
+  Failed --> Disabled
+```
+
+### 图 2：工具发现与命名映射
+
+```text
+MCP server
+  -> list tools
+  -> 映射为内部工具定义
+  -> 命名为 mcp__server__tool
+  -> 进入工具注册系统
+  -> 继续走权限管线
+```
+
+### 图 3：MCP 权限模型
+
+```mermaid
+flowchart TD
+  A[MCP 工具调用] --> B[服务器来源检查]
+  B --> C[配置作用域检查]
+  C --> D[allow / deny 规则]
+  D --> E[Hook 和用户确认]
+  E --> F[执行或拒绝]
+```
+
+### 图 4：IDE Bridge 双向通信
+
+```mermaid
+sequenceDiagram
+  participant IDE as IDE Extension
+  participant Bridge as Bridge
+  participant CLI as Claude Code CLI
+  participant Tool as IDE Tool
+  IDE->>Bridge: diagnostics / selection / file context
+  Bridge->>CLI: normalized message
+  CLI->>Tool: getDiagnostics / applyEdit
+  Tool-->>CLI: result
+  CLI-->>Bridge: response events
+  Bridge-->>IDE: render / update
+```
+
+Bridge 增强的是上下文和交互，不是权限豁免。IDE 工具仍然应该在白名单和权限管线内运行。

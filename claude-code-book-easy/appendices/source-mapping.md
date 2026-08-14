@@ -6,6 +6,10 @@
 
 原课程入口：<https://lintsinghua.github.io/#preface>
 
+补充文件：
+
+- [enrichment-priority.md](enrichment-priority.md)：一到十二章后续加厚优先级清单
+
 ## 映射总览
 
 | 原课程位置 | 原课程主题 | 整理版文件 | 整理重点 |

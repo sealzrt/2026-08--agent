@@ -384,3 +384,51 @@ allow: npm *
 7. Agent 越能行动，权限越要前置。成熟 Harness 应该在工具可见性、参数校验、规则匹配、上下文评估、用户确认和持久化规则中形成闭环。
 
 下一章会进入设置与配置系统。权限规则不是孤立存在的，它们需要通过配置系统在用户、项目和会话之间组织起来。
+
+## 4.6 关键流程图补强
+
+### 图 1：四阶段权限管线
+
+```mermaid
+flowchart LR
+  A[工具请求] --> B[validateInput]
+  B --> C[hasPermissionsToUseTool]
+  C --> D[checkPermissions]
+  D --> E[交互式确认]
+  E --> F[执行或拒绝]
+```
+
+### 图 2：权限模式谱系
+
+```text
+plan      : 只读优先，写操作受限
+default   : 高风险动作逐次确认
+auto      : 低风险动作可自动批准
+bubble    : 子智能体权限上交父级
+bypass    : 跳过权限，风险最高
+```
+
+### 图 3：Bash 前缀匹配流程
+
+```mermaid
+flowchart TD
+  A[Bash 命令] --> B[解析命令前缀]
+  B --> C[匹配 allow / deny 规则]
+  C --> D{命中 deny}
+  D -- 是 --> E[拒绝]
+  D -- 否 --> F{命中 allow}
+  F -- 是 --> G[允许或低风险确认]
+  F -- 否 --> H[分类器或用户确认]
+```
+
+### 图 4：hook / user / classifier 决策竞争
+
+```text
+权限请求
+  -> Hook 可以提前允许或拒绝
+  -> Classifier 可以给低风险建议
+  -> User 是不确定风险的最终确认者
+  -> ResolveOnce 确保只采纳第一个有效决策
+```
+
+这张图的重点是：权限决策不是投票系统，而是有优先级和原子解决规则的竞争过程。

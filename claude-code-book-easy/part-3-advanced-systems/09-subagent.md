@@ -597,3 +597,52 @@ stateDiagram-v2
 7. 工具隔离是子智能体安全的核心。全局禁止列表、异步白名单和 `filterToolsForAgent` 三层过滤，确保子智能体不会递归、越权或在后台阻塞用户。
 
 8. 子智能体生命周期管理包括创建、上下文构建、运行、等待工具、完成、中断和清理。合理设置 `maxTurns`、选择模型和工具集，是降低成本和提升可靠性的关键。
+
+## 9.7 关键流程图补强
+
+### 图 1：Subagent 生命周期
+
+```mermaid
+stateDiagram-v2
+  [*] --> Created
+  Created --> ContextBuilt
+  ContextBuilt --> Running
+  Running --> WaitingForTools
+  WaitingForTools --> Running
+  Running --> Completed
+  Running --> Aborted
+  Completed --> Cleaned
+  Aborted --> Cleaned
+```
+
+### 图 2：Fork 上下文复制
+
+```text
+父会话上下文
+  -> 复制 cache-safe 前缀
+  -> 追加子任务指令
+  -> 继承必要工具和权限
+  -> 子 Agent 独立运行
+  -> 返回结构化结果
+```
+
+### 图 3：工具隔离过滤
+
+```mermaid
+flowchart TD
+  A[父级工具池] --> B[全局禁止列表]
+  B --> C[异步 Agent 白名单]
+  C --> D[Agent 定义 tools 字段]
+  D --> E[filterToolsForAgent]
+  E --> F[子智能体最终工具池]
+```
+
+### 图 4：CacheSafeParams 五维图
+
+| 维度 | 影响 |
+|------|------|
+| system prompt | 决定共享前缀稳定性 |
+| user context | 用户上下文变化会破坏缓存 |
+| system context | 运行时说明必须稳定 |
+| tool context | 工具定义和顺序必须稳定 |
+| messages | 父消息前缀要字节级一致 |

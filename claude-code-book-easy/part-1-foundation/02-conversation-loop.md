@@ -348,3 +348,53 @@ Claude Code 的对话循环选择 `async function*`，而不是 class 方法。�
 7. 终止不是失败，而是设计。生产级 Agent 需要区分用户中断、工具中断、上下文过长、模型错误、Hook 阻断等不同结束路径。
 
 下一章会转向工具系统。如果说对话循环是 Agent 的心脏，那么工具系统就是 Agent 的双手：它决定模型的意图如何变成真实动作。
+
+## 2.5 关键流程图补强
+
+### 图 1：一个 Turn 的完整生命周期
+
+```mermaid
+flowchart TD
+  A[用户输入] --> B[初始化状态]
+  B --> C[上下文预处理]
+  C --> D[调用模型 API]
+  D --> E[接收流式事件]
+  E --> F{是否出现 tool_use}
+  F -- 是 --> G[执行工具]
+  G --> H[工具结果回填 messages]
+  H --> I{继续或终止}
+  F -- 否 --> I
+  I -- Continue --> C
+  I -- Terminal --> J[输出最终结果]
+```
+
+### 图 2：State / Continue / Terminal
+
+```text
+State
+  -> Continue(next_turn)
+  -> Continue(compact_retry)
+  -> Continue(max_output_tokens_recovery)
+  -> Terminal(success)
+  -> Terminal(user_abort)
+  -> Terminal(tool_abort)
+  -> Terminal(token_budget_exceeded)
+```
+
+这张图要表达的重点是：继续和终止都不是模糊状态，而是带原因的状态转换。带原因以后，Trace、测试和错误恢复才有抓手。
+
+### 图 3：工具结果回填闭环
+
+```mermaid
+sequenceDiagram
+  participant M as Model
+  participant L as Loop
+  participant T as Tool
+  M->>L: tool_use
+  L->>T: execute(input)
+  T-->>L: tool_result
+  L->>L: append tool_result to messages
+  L->>M: next model call with updated messages
+```
+
+如果没有“结果回填”，工具调用只是一次外部动作；有了回填，模型才能基于观察结果继续推理。
