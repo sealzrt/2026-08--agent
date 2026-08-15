@@ -21,6 +21,34 @@
 
 易学理解：配置像一层层透明胶片。底层提供默认图案，上层可以盖住下层的某些字段，但不是所有字段都用同一种方式覆盖。
 
+先看配置系统全景：
+
+```mermaid
+flowchart TD
+  Sources[配置来源<br/>插件 / 用户 / 项目 / 本地 / CLI / 企业策略] --> Load[读取与解析]
+  Load --> Validate[Schema 校验与默认值补齐]
+  Validate --> Merge[按优先级和字段类型合并]
+  Merge --> Safety[安全敏感配置过滤]
+  Safety --> Final[最终有效配置]
+  Final --> AppState[初始化 AppState]
+  AppState --> Model[模型选择]
+  AppState --> Permission[权限与工具可见性]
+  AppState --> Hooks[Hooks]
+  AppState --> MCP[MCP / 插件]
+  AppState --> UI[CLI UI 状态]
+
+  classDef source fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef process fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef safety fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef runtime fill:#F5F3FF,stroke:#7C3AED,color:#111827
+  class Sources source
+  class Load,Validate,Merge process
+  class Safety safety
+  class Final,AppState,Model,Permission,Hooks,MCP,UI runtime
+```
+
+读图结论：配置不是静态文件。它会经过加载、合并和安全过滤，最终进入运行时状态，并影响 Agent 的模型、权限、扩展和界面行为。
+
 ### 5.1.1 配置源定义与顺序
 
 原课程给出的完整优先级链从低到高是：
@@ -42,6 +70,32 @@ pluginSettings
 | `localSettings` | 项目本地覆盖 | 个人调试偏好、本地额外权限 | 不入 Git，用户本机控制 |
 | `flagSettings` | CLI 一次性覆盖 | CI 专用配置、临时模型选择 | 用户显式传入 |
 | `policySettings` | 企业管理策略 | 强制模型、禁用能力、托管 Hooks | 最高优先级，管理方控制 |
+
+如果不想先背名字，可以按用途分层理解：
+
+```mermaid
+flowchart TB
+  P0[pluginSettings<br/>插件默认能力<br/>提供基础值] --> P1[userSettings<br/>个人长期偏好<br/>跨项目生效]
+  P1 --> P2[projectSettings<br/>团队共享约定<br/>随仓库提交]
+  P2 --> P3[localSettings<br/>个人本地覆盖<br/>不提交 Git]
+  P3 --> P4[flagSettings<br/>一次性运行覆盖<br/>CLI / CI 指定]
+  P4 --> P5[policySettings<br/>企业强制策略<br/>最高权威]
+
+  classDef low fill:#F3F4F6,stroke:#6B7280,color:#111827
+  classDef user fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef team fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef local fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef flag fill:#FDF2F8,stroke:#DB2777,color:#111827
+  classDef policy fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class P0 low
+  class P1 user
+  class P2 team
+  class P3 local
+  class P4 flag
+  class P5 policy
+```
+
+这张图的重点不是颜色，而是分工：插件给默认值，用户表达偏好，项目表达团队约定，本地表达个人覆盖，CLI 表达一次性意图，企业策略表达不可绕过的边界。
 
 优先级的核心原则是：后加载者覆盖前者。但这个“覆盖”不是简单粗暴的替换。不同数据类型有不同合并规则。
 
@@ -226,6 +280,45 @@ userSettings
 
 因此 Claude Code 的核心安全策略是：在安全敏感检查中系统性排除 `projectSettings`。
 
+可以先用信任边界图理解：
+
+```mermaid
+flowchart TB
+  High[更可信<br/>用户或组织主动控制] --> Policy[policySettings<br/>企业管理]
+  Policy --> Flag[flagSettings<br/>用户显式 CLI 指定]
+  Flag --> Local[localSettings<br/>用户本机私有]
+  Local --> User[userSettings<br/>用户全局偏好]
+  User --> Project[projectSettings<br/>随仓库进入，可能来自他人]
+  Project --> Plugin[pluginSettings<br/>插件默认值，需受插件来源约束]
+  Plugin --> Low[更不可信<br/>可能来自外部生态]
+
+  classDef trusted fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef mixed fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef untrusted fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class High,Policy,Flag,Local,User trusted
+  class Project mixed
+  class Plugin,Low untrusted
+```
+
+读图结论：优先级高低和可信度不是一回事。`projectSettings` 在合并顺序中位于中间，但因为它会随仓库进入本机，所以不能在安全敏感场景下被直接信任。
+
+安全敏感配置的排除流程可以这样看：
+
+```mermaid
+flowchart TD
+  A[准备启用安全敏感能力] --> B{配置是否来自 projectSettings?}
+  B -->|是| C[排除 projectSettings<br/>不作为授权依据]
+  B -->|否| D[继续检查来源可信度]
+  C --> E{是否有 policySettings 锁定?}
+  D --> E
+  E -->|是| F[按企业策略执行]
+  E -->|否| G{是否来自用户显式控制来源?}
+  G -->|是| H[允许进入后续权限判断]
+  G -->|否| I[保守拒绝或要求用户确认]
+```
+
+典型安全敏感能力包括：跳过权限确认、自动批准命令、加载 Hooks、连接 MCP、改变记忆写入位置。这些能力一旦被恶意项目配置控制，就可能越过用户的真实意图。
+
 ### 5.2.1 供应链攻击的威胁模型
 
 传统软件供应链攻击通常通过依赖包、构建产物或安装脚本进入系统。Agent 配置供应链攻击更隐蔽：攻击者可以把危险配置伪装成普通项目文件。
@@ -388,6 +481,30 @@ setState(prev => prev)
 // 触发通知：返回新引用
 setState(prev => ({ ...prev, count: prev.count + 1 }))
 ```
+
+状态更新流程可以这样看：
+
+```mermaid
+flowchart TD
+  A[调用 setState(updater)] --> B[读取 oldState]
+  B --> C[执行 updater(oldState)]
+  C --> D[newState]
+  D --> E{Object.is(oldState, newState)?}
+  E -->|是，同一引用| F[不通知订阅者]
+  E -->|否，新引用| G[保存 newState]
+  G --> H[通知 subscribers]
+  H --> I[selector 读取状态切片]
+  I --> J[相关 UI / 子系统更新]
+
+  classDef nochange fill:#F3F4F6,stroke:#6B7280,color:#111827
+  classDef update fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef decision fill:#FFF7ED,stroke:#EA580C,color:#111827
+  class E decision
+  class F nochange
+  class G,H,I,J update
+```
+
+读图结论：不可变更新不是形式要求，而是通知机制的基础。返回同一个对象等于告诉 Store“没有变化”；返回新对象才会让订阅者重新读取。
 
 这种做法把“状态是否变化”的语义交给调用方：返回新引用就表示发生变化，返回旧引用就表示没有变化。
 

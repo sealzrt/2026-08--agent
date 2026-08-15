@@ -21,6 +21,49 @@
 
 易学理解：代码、文件结构、Git 历史是 Agent 可以实时查到的事实，不该塞进长期记忆。用户偏好、项目决策背后的原因、外部系统入口、被验证过的做法，才更适合保存。
 
+先看一条信息如何变成记忆：
+
+```mermaid
+flowchart TD
+  A[对话中出现一条信息] --> B{未来会影响 Agent 行为吗?}
+  B -->|否| X[不保存]
+  B -->|是| C{能从代码/文档/Git 实时查到吗?}
+  C -->|是| X
+  C -->|否| D{只是当前任务临时细节吗?}
+  D -->|是| X
+  D -->|否| E[进入记忆分类]
+  E --> F[user / feedback / project / reference]
+  F --> G[写入 Markdown 记忆文件]
+  G --> H[更新 MEMORY.md 索引]
+  H --> I[未来任务先读索引]
+  I --> J[按需打开具体记忆]
+  J --> K[使用前验证当前性]
+
+  classDef keep fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef drop fill:#FEF2F2,stroke:#DC2626,color:#111827
+  classDef process fill:#E8F3FF,stroke:#2563EB,color:#111827
+  class X drop
+  class E,F,G,H,I,J,K process
+  class B,C,D keep
+```
+
+读图结论：记忆系统的第一步不是分类，而是克制。只有“未来有用、实时拿不到、不是临时细节”的信息，才值得进入记忆系统。
+
+也可以把第一步压缩成一个决策树：
+
+```text
+要不要保存为记忆？
+  -> 未来会影响 Agent 行为吗？
+      否：不保存
+  -> 能从代码 / 文档 / Git 直接查到吗？
+      是：不保存，未来实时读取
+  -> 只是当前任务临时细节吗？
+      是：不保存
+  -> 是否涉及日期、版本、负责人、路径等会变化的信息？
+      是：保存时写清绝对时间，使用前必须验证
+  -> 进入四类记忆分类
+```
+
 ### 6.1.1 闭合类型系统
 
 原课程强调，Claude Code 把记忆限制为四种闭合类型：
@@ -93,6 +136,41 @@ graph LR
 | 某个 Grafana 仪表盘地址 | 适合 | 外部入口不在仓库里 |
 
 甚至用户要求“记住所有文件结构”时，Agent 也应该引导用户保存更有价值的信息：哪些结构背后的原因、哪些约定不明显、哪些坑需要以后避开。
+
+### 记忆、上下文、项目文档和代码仓库的边界
+
+这四者很容易混在一起，可以用下面的图分清：
+
+```mermaid
+flowchart LR
+  Context[上下文<br/>当前会话工作记忆] --> Now[服务本轮模型调用]
+  Memory[记忆<br/>跨会话长期线索] --> Future[影响未来 Agent 行为]
+  Docs[项目文档<br/>团队共享正式知识] --> Team[供人和 Agent 稳定查阅]
+  Repo[代码仓库<br/>当前事实来源] --> Truth[需要时实时读取验证]
+
+  Context -.会话结束可能消失.-> Memory
+  Memory -.涉及当前实现时要验证.-> Repo
+  Docs -.可被 Agent 读取.-> Context
+  Repo -.可生成当前事实.-> Context
+
+  classDef context fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef memory fill:#F5F3FF,stroke:#7C3AED,color:#111827
+  classDef docs fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef repo fill:#FFF7ED,stroke:#EA580C,color:#111827
+  class Context,Now context
+  class Memory,Future memory
+  class Docs,Team docs
+  class Repo,Truth repo
+```
+
+| 载体 | 保存什么 | 不适合保存什么 |
+|------|----------|----------------|
+| 上下文 | 当前任务需要的工作材料 | 跨会话长期规则 |
+| 记忆 | 用户偏好、行为反馈、项目决策背景、外部入口 | 当前代码结构、临时日志、可实时读取事实 |
+| 项目文档 | 团队正式规范、架构说明、运行手册 | 个人偏好、一次性任务状态 |
+| 代码仓库 | 当前实现和配置事实 | 决策背后的隐性原因 |
+
+读图结论：记忆不是项目文档的替代品，也不是代码仓库快照。它更像“未来协作的线索”，用到当前行动前还要回到仓库或外部系统验证。
 
 ### 6.1.4 记忆使用的最佳实践
 

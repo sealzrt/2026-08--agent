@@ -23,12 +23,49 @@
 
 一个容易理解的类比是：上下文窗口像一张有限大小的工作台。当前目标、正在看的文件、刚做出的决定必须放在桌面上；旧日志、重复输出、已经验证完的中间材料可以收进抽屉或贴成摘要。工作台不是越满越好，真正重要的是让模型下一步需要的材料在正确位置。
 
+先看上下文管理全景：
+
+```mermaid
+flowchart TD
+  A[messages 历史] --> Budget[Token 预算计算]
+  B[system prompt] --> Budget
+  C[tools 定义] --> Budget
+  D[tool results] --> Budget
+  E[memories] --> Budget
+  F[attachments / 动态说明] --> Budget
+  Budget --> Limit{是否接近或超过有效窗口?}
+  Limit -->|否| Input[构造本轮模型输入]
+  Limit -->|是| Strategy[选择压缩/裁剪策略]
+  Strategy --> Rebuild[重建上下文]
+  Rebuild --> Input
+  Input --> Model[调用模型]
+
+  classDef source fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef process fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef warn fill:#FFF7ED,stroke:#EA580C,color:#111827
+  class A,B,C,D,E,F source
+  class Budget,Input,Model process
+  class Limit,Strategy,Rebuild warn
+```
+
+读图结论：上下文管理不是“把历史消息塞给模型”。它是在每轮模型调用前，把历史、工具、记忆、附件和系统提示放进同一个 token 预算里，再决定是否需要压缩。
+
 ### 有效窗口公式
 
 模型标称上下文窗口并不等于可放历史消息的空间，因为模型还需要输出空间。Claude Code 会先为输出预留一部分 token，再把剩余部分当成本轮可承载上下文的有效空间。
 
 ```text
 有效上下文窗口 = 模型上下文窗口 - 预留输出 token
+```
+
+用图看更直观：
+
+```text
+模型总上下文窗口
+|------------------------------------------------------------|
+|                    本轮可用上下文                          | 预留输出 token |
+| messages / tools / memories / attachments / system prompt   | 模型回答空间   |
+|------------------------------------------------------------|
 ```
 
 原课程提到的关键实现思想是：预留空间取“模型最大输出 token”和 `20,000` 中较小的那个值。这样做的目的不是保守，而是避免压缩本身失败。
@@ -64,6 +101,23 @@ flowchart LR
 | `MANUAL_COMPACT_BUFFER_TOKENS` | 手动压缩最低余量 | 保证用户主动压缩还能完成 |
 
 这里的核心思想是“提前处置”。上下文管理不能只做最后一刻的错误处理。真正稳定的 Agent 会在危险到来前就提醒、压缩或阻断。
+
+当空间紧张时，材料优先级可以这样判断：
+
+```mermaid
+flowchart TB
+  Keep[必须保留<br/>当前目标 / 最近用户要求 / 未完成任务 / 关键决策] --> Compress[可压缩<br/>旧工具结果 / 重复日志 / 已完成中间过程]
+  Compress --> Drop[可丢弃或重新读取<br/>过期缓存 / 可从仓库重读的大段文件 / 无关输出]
+
+  classDef keep fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef compress fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef drop fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class Keep keep
+  class Compress compress
+  class Drop drop
+```
+
+这张图不是绝对规则，而是默认倾向：越影响下一步决策，越应该保留原文；越容易重新获取，越适合压缩或移出上下文。
 
 ### 断路器设计
 
@@ -111,6 +165,30 @@ Snip
 | MicroCompact | 否 | 过期缓存后的旧工具结果 | 长会话暂停后恢复、旧结果太多 |
 | Collapse | 部分依赖 | 消息组和上下文结构 | 高压状态下主动重构上下文 |
 | AutoCompact | 是 | 整段对话历史 | 前面策略不够时的兜底摘要 |
+
+选择策略时可以先看这棵决策树：
+
+```mermaid
+flowchart TD
+  A[上下文压力升高] --> B{只是旧工具结果太长?}
+  B -->|是，且用户/系统明确可清理| S[Level 1: Snip]
+  B -->|否| C{缓存已过期且旧工具结果很多?}
+  C -->|是| M[Level 2: MicroCompact]
+  C -->|否| D{需要在高水位前重构消息结构?}
+  D -->|是| L[Level 3: Collapse]
+  D -->|否| E{前面策略仍放不下?}
+  E -->|是| A4[Level 4: AutoCompact]
+  E -->|否| N[暂不压缩，继续监控]
+
+  classDef light fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef mid fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef heavy fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class S,M light
+  class L mid
+  class A4 heavy
+```
+
+读图结论：压缩策略不是随便选一个。优先使用低成本、低损失策略；只有当前面策略释放空间不够时，才进入更重的模型摘要。
 
 ### Level 1: Snip（裁剪）
 
@@ -177,6 +255,29 @@ flowchart TD
 第二，压缩不是把摘要孤零零放进上下文，而是构造一个清晰的新消息序列。原课程提到的顺序是：压缩边界、摘要消息、保留消息、附件、hook 结果。稳定顺序对调试、回放和后续压缩都很重要。
 
 第三，如果压缩提示本身仍然太长，系统会裁掉最老的 API 轮次组并重试，但重试次数有限。无限裁剪会让摘要失去意义，也会拖垮请求链路。
+
+AutoCompact 前后结构可以这样理解：
+
+```mermaid
+flowchart LR
+  subgraph Before[压缩前]
+    B1[大量历史消息]
+    B2[长工具结果]
+    B3[附件和动态说明]
+    B4[最近关键消息]
+  end
+
+  subgraph After[压缩后]
+    A1[CompactBoundaryMessage<br/>压缩边界]
+    A2[summary<br/>历史摘要]
+    A3[最近关键消息<br/>尽量保留原文]
+    A4[必要附件和 Hook 结果]
+  end
+
+  Before --> After
+```
+
+读图结论：AutoCompact 不是简单“删掉旧历史”。它用边界标记和摘要替换大段历史，同时保留最近关键消息，让下一轮 Agent 能接着工作。
 
 ## 7.3 压缩提示工程
 
