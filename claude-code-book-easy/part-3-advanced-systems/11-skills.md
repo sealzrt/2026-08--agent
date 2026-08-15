@@ -21,6 +21,34 @@
 
 如果每次启动都把“代码审查流程”“API 生成规范”“调试套路”“部署检查清单”“某项目专用约定”全部放进上下文，模型会更慢、更贵，也更容易在无关指令之间摇摆。Skill 的思路是：把某类任务的知识、流程、模板和辅助资源做成一个能力包，只有在需要时才加载。
 
+先看一个用户请求如何触发 Skill：
+
+```mermaid
+flowchart TD
+  A[用户请求或 Slash 命令] --> B{是否显式调用 Skill?}
+  B -->|是| C[按名称加载 Skill]
+  B -->|否| D[根据描述、路径、条件和任务意图匹配]
+  D --> E{是否匹配到相关 Skill?}
+  E -->|否| F[使用基础系统提示继续]
+  E -->|是| G[读取 SKILL.md frontmatter]
+  C --> G
+  G --> H[检查参数 / allowed-tools / paths / 来源可信度]
+  H --> I[按需读取正文和附属文件]
+  I --> J[生成最终 Skill Prompt]
+  J --> K[进入对话循环或 fork 执行]
+
+  classDef entry fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef match fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef safety fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef run fill:#F5F3FF,stroke:#7C3AED,color:#111827
+  class A,B,C,D,E entry
+  class G,I,J match
+  class H safety
+  class K run
+```
+
+读图结论：Skill 不是启动时全部塞进上下文的长 prompt。它先被注册和索引，只有被显式调用或条件匹配时，才按需加载正文、参数和附属资源。
+
 可以把技能理解成 Agent 的“专业操作手册”：
 
 ```text
@@ -31,6 +59,35 @@
 ```
 
 这套设计的核心目标是“默认可用，按需增强”。普通用户不用配置也能使用内置技能；团队可以在项目中添加项目级技能；企业可以通过管理策略下发统一技能；插件和 MCP 还可以把外部能力接进来。
+
+### Skill、Command、Agent、Plugin、MCP 的边界
+
+这些概念经常一起出现，可以先按“解决什么问题”区分：
+
+```mermaid
+flowchart LR
+  Skill[Skill<br/>任务方法论] --> Prompt[生成任务提示和流程]
+  Command[Command<br/>用户入口] --> Invoke[触发某个动作或 Skill]
+  Agent[Agent<br/>独立推理执行者] --> Run[带工具和上下文完成子任务]
+  Plugin[Plugin<br/>扩展包] --> Pack[打包 Skills / Agents / Hooks / 配置]
+  MCP[MCP<br/>外部协议] --> External[接入外部工具和资源]
+
+  Plugin --> Skill
+  Plugin --> Agent
+  Plugin --> Hook[Hook]
+  MCP --> Skill
+  MCP --> External
+```
+
+| 概念 | 主要回答的问题 |
+|------|----------------|
+| Skill | 这类任务应该按什么流程做？ |
+| Command | 用户如何显式触发某个能力？ |
+| Agent | 是否需要一个独立上下文的执行者？ |
+| Plugin | 如何打包、分发和版本化一组能力？ |
+| MCP | 如何把外部服务能力接入 Harness？ |
+
+一句话区分：Skill 是方法，Command 是入口，Agent 是执行者，Plugin 是分发包，MCP 是外部连接协议。
 
 ### 11.1.1 内置技能清单
 
@@ -137,6 +194,27 @@ my-skill/
 ### 11.2.1 Markdown Frontmatter 配置
 
 `SKILL.md` 顶部可以写 YAML frontmatter。它描述技能元数据、触发条件、参数、权限和执行上下文。
+
+这些字段最终会映射到不同运行行为：
+
+```mermaid
+flowchart TD
+  FM[SKILL.md frontmatter] --> Identity[name / description<br/>识别与展示]
+  FM --> Trigger[when_to_use / paths<br/>触发与条件匹配]
+  FM --> Args[arguments<br/>参数解析与替换]
+  FM --> Tools[allowed-tools<br/>工具权限边界]
+  FM --> Exec[model / effort / fork<br/>执行方式]
+  FM --> Source[loadedFrom<br/>来源信任度]
+
+  Identity --> Index[技能索引]
+  Trigger --> Match[运行时匹配]
+  Args --> Prompt[生成最终 Prompt]
+  Tools --> Guard[限制可用工具]
+  Exec --> Runner[选择当前会话或子上下文执行]
+  Source --> Policy[安全策略判断]
+```
+
+读图结论：frontmatter 不是装饰元数据。它决定技能如何被发现、何时触发、能用哪些工具、如何执行，以及安全策略如何看待它。
 
 一个简化示例：
 

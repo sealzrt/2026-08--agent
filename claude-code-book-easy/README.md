@@ -22,7 +22,7 @@
 1. 先读 [00-preface.md](00-preface.md)，明确这门课到底在学什么。
 2. 再读 [appendices/source-mapping.md](appendices/source-mapping.md)，知道整理版与原课程章节如何对应。
 3. 学每章前先看整理版导读，再回到原课程阅读正文。
-4. 遇到术语不清楚时查 [appendices/glossary.md](appendices/glossary.md)。
+4. 遇到术语不清楚时查 [appendices/appendix-d-glossary.md](appendices/appendix-d-glossary.md) 或 [appendices/glossary.md](appendices/glossary.md)。
 5. 每章结束后用“学完检查点”确认自己是否真正理解。
 
 ## 内容组织
@@ -38,6 +38,10 @@ claude-code-book-easy/
 ├── part-4-engineering-practice/# 第 13-15 章：工程实践篇
 └── appendices/
     ├── source-mapping.md
+    ├── appendix-a-architecture-map.md
+    ├── appendix-b-tool-list.md
+    ├── appendix-c-feature-flags.md
+    ├── appendix-d-glossary.md
     ├── glossary.md
     ├── architecture-learning-map.md
     └── enrichment-priority.md
@@ -53,13 +57,15 @@ claude-code-book-easy/
 
 ## 当前状态
 
-第一阶段先产出学习框架：
+已按原课程主线产出 15 章正文和 4 个附录的易学版结构，并持续补充流程图、决策树和概念边界图：
 
 - [plan.md](plan.md)：整理方案
 - [00-preface.md](00-preface.md)：前言导读
 - [appendices/source-mapping.md](appendices/source-mapping.md)：原课程章节映射
-- [appendices/glossary.md](appendices/glossary.md)：核心术语表
+- [appendices/appendix-a-architecture-map.md](appendices/appendix-a-architecture-map.md)：附录 A，架构导航地图
+- [appendices/appendix-b-tool-list.md](appendices/appendix-b-tool-list.md)：附录 B，工具完整清单
+- [appendices/appendix-c-feature-flags.md](appendices/appendix-c-feature-flags.md)：附录 C，功能标志速查表
+- [appendices/appendix-d-glossary.md](appendices/appendix-d-glossary.md)：附录 D，术语表
 - [appendices/architecture-learning-map.md](appendices/architecture-learning-map.md)：全书架构学习地图
+- [appendices/glossary.md](appendices/glossary.md)：核心术语短表
 - [appendices/enrichment-priority.md](appendices/enrichment-priority.md)：后续加厚优先级清单
-
-后续再按原课程章节逐章补充易学版导读和拆解。

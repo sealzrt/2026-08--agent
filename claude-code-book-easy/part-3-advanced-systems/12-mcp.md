@@ -16,6 +16,69 @@
 - 解释 MCP 的配置作用域、企业白名单/黑名单、插件去重和 IDE 工具白名单。
 - 理解 Bridge 系统如何支撑 IDE 与 claude.ai 的双向通信和远程控制。
 
+## 12.0 先看全景：MCP Server 如何变成 Claude Code 工具
+
+MCP 最容易被误解成“一个插件市场”或“一个外部工具”。更准确的理解是：MCP 是外部能力进入 Agent Harness 的协议适配层。外部服务器声明能力，Claude Code 连接、发现、映射、注册，然后仍然走内部工具系统和权限管线。
+
+```mermaid
+flowchart TD
+  Ext["外部系统<br/>数据库 / GitHub / IDE / 内部服务"] --> Server["MCP Server<br/>声明 tools / resources / prompts"]
+  Server --> Transport["传输层<br/>stdio / HTTP / SSE / WebSocket / SDK"]
+  Transport --> Client["Claude Code MCP Client"]
+  Client --> Discover["能力发现<br/>list tools/resources"]
+  Discover --> Map["适配为内部 ToolDef"]
+  Map --> Name["命名隔离<br/>mcp__server__tool"]
+  Name --> Registry["工具注册表"]
+  Registry --> Filter["工具过滤和模型可见性"]
+  Filter --> Perm["权限管线"]
+  Perm --> Exec["通过 MCP 协议调用 Server"]
+  Exec --> Result["tool_result 回填 messages"]
+
+  classDef external fill:#ce93d8,stroke:#7b1fa2,color:#fff
+  classDef protocol fill:#4a90d9,stroke:#2c5f8a,color:#fff
+  classDef internal fill:#8fbc8f,stroke:#5a8a5a,color:#fff
+  classDef safety fill:#ef5350,stroke:#c62828,color:#fff
+
+  class Ext,Server external
+  class Transport,Client,Discover protocol
+  class Map,Name,Registry,Filter,Exec,Result internal
+  class Perm safety
+```
+
+读图结论：
+
+- MCP Server 不直接控制 Claude Code，只声明可用能力。
+- MCP 工具进入内部后，和内置工具一样要被过滤、校验、授权和审计。
+- `mcp__server__tool` 不是随意命名，而是把“来自哪个服务器”和“具体哪个工具”写进工具名。
+
+### `mcp__server__tool` 名称拆解
+
+```text
+mcp__github__create_issue
+ |     |        |
+ |     |        -> tool：服务器暴露的具体工具
+ |     -> server：MCP 服务器名或配置名
+ -> mcp：说明这是外部 MCP 工具，不是内置工具
+```
+
+这个命名有三个作用：
+
+| 作用 | 为什么重要 |
+|------|------------|
+| 避免重名 | 内置 `read` 和某个外部 `read` 不会混在一起 |
+| 权限隔离 | 策略可以针对某个 MCP Server 或某个工具生效 |
+| 审计清楚 | 日志里能看出动作来自哪个外部能力 |
+
+### 传输方式先按边界理解
+
+| 接入方式 | 边界感 | 适合先记什么 |
+|----------|--------|--------------|
+| `stdio` | 本地子进程 | 最常见，本地开发优先理解它 |
+| `http` / `sse` | 远程服务 | 重点看认证、延迟和服务可用性 |
+| `ws` | 实时双向连接 | 适合理解长期连接和推送 |
+| `sdk` | 宿主进程内调用 | 信任边界更多交给宿主应用 |
+| IDE Bridge | IDE 专用通道 | 重点看白名单、权限回调和双向消息 |
+
 ## 12.1 MCP 架构概览
 
 MCP 是 Model Context Protocol 的缩写。它解决的核心问题是：Agent 需要访问很多外部系统，但每个系统都单独适配会造成碎片化。

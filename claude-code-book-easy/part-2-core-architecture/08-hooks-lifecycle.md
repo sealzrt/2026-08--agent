@@ -19,6 +19,35 @@
 
 钩子是 Agent 生命周期上的扩展点。主循环走到某个关键节点时，系统发出一个事件；所有匹配这个事件的钩子按规则执行；钩子可以记录日志、注入上下文、修改输入，甚至阻止动作继续。
 
+先看一次工具调用如何触发 Hook：
+
+```mermaid
+sequenceDiagram
+  participant M as 模型
+  participant L as 对话循环
+  participant P as 权限管线
+  participant H as Hook 系统
+  participant T as 工具
+  participant N as 下一轮模型
+
+  M-->>L: tool_use
+  L->>P: 权限检查
+  P-->>L: allow
+  L->>H: PreToolUse
+  H-->>L: allow / block / updatedInput
+  alt Hook block
+    L-->>N: 回填拒绝原因
+  else Hook allow
+    L->>T: 执行工具
+    T-->>L: tool_result
+    L->>H: PostToolUse / PostToolUseFailure
+    H-->>L: 审计 / 上下文 / 后处理
+    L-->>N: tool_result 进入下一轮 messages
+  end
+```
+
+读图结论：Hook 不替代工具，也不替代权限管线。它是在生命周期节点上插入额外行为，让项目、用户或企业可以观察、拦截、增强主流程。
+
 可以把钩子系统看成主循环旁边的一组检查站：
 
 ```mermaid
@@ -33,6 +62,29 @@ flowchart TD
 ```
 
 这个设计的价值是解耦。主循环不需要知道每个团队的审计脚本、审批服务或项目约束，只需要在稳定节点发出事件，并理解钩子的结构化返回。
+
+### Hook、Tool、Skill 的边界
+
+这三个概念都能影响 Agent 行为，但职责完全不同：
+
+```mermaid
+flowchart LR
+  U[用户任务] --> S[Skill<br/>告诉 Agent 某类任务怎么做]
+  S --> L[对话循环]
+  L --> T[Tool<br/>把模型意图变成真实动作]
+  L --> H[Hook<br/>在生命周期节点观察/拦截/增强]
+  H -.可阻止或补充上下文.-> L
+  T --> R[tool_result]
+  R --> L
+```
+
+| 概念 | 主要作用 | 典型问题 |
+|------|----------|----------|
+| Tool | 执行动作 | “模型要读文件/跑命令，怎么执行？” |
+| Hook | 插入生命周期控制 | “执行前后要不要审计、阻止或补充信息？” |
+| Skill | 提供任务方法论 | “这类任务应该按什么流程做？” |
+
+一句话区分：Tool 负责做事，Hook 负责管流程节点，Skill 负责教 Agent 怎么完成一类任务。
 
 ### 五种钩子类型
 
@@ -222,6 +274,23 @@ flowchart TD
   }
 }
 ```
+
+响应字段可以按意图选择：
+
+```mermaid
+flowchart TD
+  A[Hook 想影响什么?] --> B{要阻止当前动作吗?}
+  B -->|是| C[decision=block<br/>reason 说明原因]
+  B -->|否| D{要修改工具输入吗?}
+  D -->|是| E[updatedInput<br/>返回修正后的参数]
+  D -->|否| F{要补充模型上下文吗?}
+  F -->|是| G[additionalContext<br/>注入说明或证据]
+  F -->|否| H{要控制后续是否继续?}
+  H -->|是| I[continue / asyncRewake<br/>结束前复核或唤醒]
+  H -->|否| J[只记录日志或返回普通成功]
+```
+
+读图结论：JSON 响应不是字段越多越好。先判断 Hook 的目的，再选择最小字段集合，避免一个 Hook 同时承担过多职责。
 
 ### 顶层决策字段
 

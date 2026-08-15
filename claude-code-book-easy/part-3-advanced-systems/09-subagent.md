@@ -19,6 +19,49 @@
 
 `AgentTool` 是主 Agent 调用子智能体的入口。它表面上是一个工具，实际承载的是“创建一个带独立上下文的 Agent 运行过程”。
 
+先看主 Agent 如何派发一个子任务：
+
+```mermaid
+sequenceDiagram
+  participant U as 用户任务
+  participant M as 主 Agent
+  participant A as AgentTool
+  participant D as Agent Definition
+  participant S as Subagent Runner
+  participant T as 子工具池
+
+  U->>M: 提出复杂任务
+  M->>A: tool_use: 派发子任务
+  A->>D: 选择内置/自定义/插件智能体定义
+  D-->>A: 模型、工具、权限、上下文策略
+  A->>S: 构造子智能体上下文
+  S->>T: 使用受限工具完成子任务
+  T-->>S: 工具结果
+  S-->>A: 子任务报告
+  A-->>M: 结构化结果返回主 Agent
+  M-->>U: 综合结果或继续下一步
+```
+
+读图结论：子智能体不是独立脱轨运行。主 Agent 通过 AgentTool 派发任务，子智能体在受限上下文和工具池中工作，最后通过明确结果回到主 Agent。
+
+什么时候该用子智能体，可以先用这张选择图：
+
+```mermaid
+flowchart TD
+  Task[当前任务] --> A{是否能由主 Agent 直接完成?}
+  A -->|是| Main[主 Agent 顺序执行]
+  A -->|否| B{子任务是否相对独立?}
+  B -->|否，需要统一协调| Coord[考虑 Coordinator<br/>第10章]
+  B -->|是| C{是否需要复用父上下文并保持缓存?}
+  C -->|是| Fork[Fork / Subagent]
+  C -->|否| Fresh[普通子任务或新会话]
+  Fork --> D{是否需要写操作?}
+  D -->|否，只读探索| Explore[Explore / Plan Agent]
+  D -->|是| Guard[General Purpose + 权限隔离]
+```
+
+这张图把本章和第 10 章区分开：Subagent 适合独立子任务；Coordinator 适合多个 Worker 之间需要共享中间成果、统一规格和集中整合的复杂任务。
+
 普通工具通常做一件确定的事，比如读文件、搜索文本、执行命令。`AgentTool` 不同：它会启动另一个推理循环，让子智能体自己读取上下文、选择工具、执行任务并返回结果。因此它连接的是两层系统：
 
 ```text
@@ -225,6 +268,30 @@ Fork 的核心思想是：把父对话已经渲染好的上下文字节前缀安
 | Fork 子智能体 | 继承父对话的缓存安全前缀 | 更省 token，缓存命中率高 | 多个独立搜索、验证或分析任务 |
 
 Fork 像是从当前对话状态分出一条分支。分支拥有独立后续消息，不会把中间探索污染主对话；但它的起点和父对话保持字节级一致，从而复用缓存。
+
+父上下文和子上下文的边界可以这样看：
+
+```mermaid
+flowchart TB
+  Parent[父 Agent 上下文] --> Shared[缓存安全共享前缀]
+  Shared --> Sys[系统提示]
+  Shared --> Tools[工具定义顺序]
+  Shared --> Messages[已渲染消息前缀]
+  Shared --> Memory[已注入记忆/配置]
+
+  Shared --> ForkA[子 Agent A]
+  Shared --> ForkB[子 Agent B]
+
+  ForkA --> ALocal[独立后续消息<br/>独立工具结果<br/>独立错误与中断]
+  ForkB --> BLocal[独立后续消息<br/>独立工具结果<br/>独立错误与中断]
+
+  ALocal --> ResultA[结果返回父 Agent]
+  BLocal --> ResultB[结果返回父 Agent]
+  ResultA --> Parent
+  ResultB --> Parent
+```
+
+读图结论：Fork 共享的是起点，不共享后续探索。这样既能复用缓存，又避免子智能体把中间推理和临时工具结果直接污染主对话。
 
 ### forkSubagent 模块的核心设计
 

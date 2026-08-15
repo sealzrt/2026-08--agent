@@ -14,6 +14,62 @@
 - 理解大型 Harness 架构中的循环依赖、模块化、功能开关、错误处理和可观测性。
 - 识别生产化 Agent Harness 需要考虑的安全、环境和未来扩展问题。
 
+## 15.0 先看全景：先做最小闭环，再做高级能力
+
+这一章容易让人产生“要一次性做完 Claude Code 所有能力”的压力。更实用的读法是：先把最小 Agent Harness 跑通，再逐层增加安全、上下文、扩展和生产化能力。
+
+```mermaid
+flowchart TD
+  M0["第 0 层：简单 LLM API<br/>input -> output"] --> M1["第 1 层：最小循环<br/>messages + model + stop condition"]
+  M1 --> M2["第 2 层：工具系统<br/>ToolDef + execute + tool_result"]
+  M2 --> M3["第 3 层：权限管线<br/>read/write 风险 + ask/allow/deny"]
+  M3 --> M4["第 4 层：上下文管理<br/>预算、裁剪、压缩、恢复"]
+  M4 --> M5["第 5 层：可观测和成本<br/>trace、usage、cache"]
+  M5 --> M6["第 6 层：扩展能力<br/>Hooks、Skills、MCP、Subagent"]
+  M6 --> M7["第 7 层：生产化<br/>调度、后台、审计、多环境"]
+
+  classDef api fill:#a0a0a0,stroke:#666,color:#fff
+  classDef core fill:#4a90d9,stroke:#2c5f8a,color:#fff
+  classDef safety fill:#ef5350,stroke:#c62828,color:#fff
+  classDef ops fill:#ff9800,stroke:#e65100,color:#fff
+  classDef ext fill:#8fbc8f,stroke:#5a8a5a,color:#fff
+
+  class M0 api
+  class M1,M2 core
+  class M3 safety
+  class M4,M5 ops
+  class M6,M7 ext
+```
+
+读图结论：
+
+- 没有最小循环，就不要急着做 Skill、MCP、Subagent。
+- 没有权限管线，就不要开放写文件、执行命令和外部服务调用。
+- 没有 trace、usage 和验证证据，生产化后很难排查问题和控制成本。
+
+### 前面章节如何映射到自己的 Harness
+
+| 课程章节 | 自研组件 | 最小实现先做什么 |
+|----------|----------|------------------|
+| 第 2 章 | Conversation Loop | while loop、stop reason、tool_result 回填 |
+| 第 3 章 | Tool System | 工具接口、schema、执行器、错误结果 |
+| 第 4 章 | Permission Pipeline | 只读/写入分类、用户确认、拒绝回填 |
+| 第 5 章 | Settings | 配置层级、默认值、项目配置 |
+| 第 6 章 | Memory | 先读项目说明文件，再考虑自动提取 |
+| 第 7 章 | Context | token 预算、优先级、压缩摘要 |
+| 第 8 章 | Hooks | 先做 PreToolUse/PostToolUse 两个点 |
+| 第 9-10 章 | Subagent / Coordinator | 等单 Agent 稳定后再加 |
+| 第 11-12 章 | Skills / MCP | 作为扩展入口，不要放进核心循环最小版 |
+| 第 13-14 章 | Streaming / Plan | 流式事件和先规划后执行的工作流 |
+
+### 先做 / 后做 / 不要一开始做
+
+| 优先级 | 能力 | 理由 |
+|--------|------|------|
+| 先做 | 对话循环、工具回填、权限确认、基础 trace | 这些决定 Harness 能不能可靠行动 |
+| 后做 | 记忆、压缩、Hooks、Skills、MCP、Subagent | 它们依赖稳定的核心循环和工具系统 |
+| 不要一开始做 | 多 Agent 编排、复杂调度、全量插件市场、过度自动化 | 这些会放大权限、状态和调试复杂度 |
+
 ## 15.1 设计原则回顾与选型指南
 
 自研 Harness 前，先不要急着写工具。应该先确认设计原则和适用场景。

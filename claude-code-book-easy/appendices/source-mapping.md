@@ -8,8 +8,13 @@
 
 补充文件：
 
+- [appendix-a-architecture-map.md](appendix-a-architecture-map.md)：附录 A，架构导航地图
+- [appendix-b-tool-list.md](appendix-b-tool-list.md)：附录 B，工具完整清单
+- [appendix-c-feature-flags.md](appendix-c-feature-flags.md)：附录 C，功能标志速查表
+- [appendix-d-glossary.md](appendix-d-glossary.md)：附录 D，术语表
 - [architecture-learning-map.md](architecture-learning-map.md)：全书架构学习地图
-- [enrichment-priority.md](enrichment-priority.md)：一到十二章后续加厚优先级清单
+- [glossary.md](glossary.md)：核心术语短表
+- [enrichment-priority.md](enrichment-priority.md)：全书后续加厚优先级清单
 
 ## 映射总览
 

@@ -14,6 +14,76 @@
 - 掌握本地定时任务、远程触发、后台任务和主动模式的基本边界。
 - 区分结构化工作流的设计模式和常见反模式。
 
+## 14.0 先看全景：Plan 模式改变的是行动顺序
+
+Plan 模式不是让 Agent “写一个 todo list”，而是把复杂任务从“边想边改”改成“先理解、先设计、先验证计划，再执行”。它真正改变的是工作流状态和权限边界。
+
+```mermaid
+flowchart LR
+  subgraph Normal["普通执行路径"]
+    N1["用户需求"] --> N2["读取上下文"]
+    N2 --> N3["直接调用工具修改"]
+    N3 --> N4["运行验证"]
+    N4 --> N5["交付"]
+  end
+
+  subgraph Plan["Plan 模式路径"]
+    P1["用户需求"] --> P2["只读调研"]
+    P2 --> P3["方案比较"]
+    P3 --> P4["写计划"]
+    P4 --> P5["验证计划"]
+    P5 --> P6["用户/机制确认"]
+    P6 --> P7["退出 Plan 后执行"]
+    P7 --> P8["验证结果"]
+    P8 --> P9["交付"]
+  end
+
+  classDef normal fill:#8fbc8f,stroke:#5a8a5a,color:#fff
+  classDef plan fill:#4a90d9,stroke:#2c5f8a,color:#fff
+  classDef gate fill:#ff9800,stroke:#e65100,color:#fff
+
+  class N1,N2,N3,N4,N5 normal
+  class P1,P2,P3,P4,P7,P8,P9 plan
+  class P5,P6 gate
+```
+
+读图结论：
+
+- 普通路径适合低风险、小范围、目标明确的任务。
+- Plan 模式适合复杂任务，因为它在执行前增加了方案比较和计划验证。
+- Plan 模式的价值不在计划文本本身，而在“动手前先确认目标、边界、顺序和验证方式”。
+
+### Plan -> Review -> Execute -> Verify 闭环
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant A as Agent
+  participant P as Plan File
+  participant V as Verify Plan
+  participant E as Execution
+
+  U->>A: 提出复杂需求
+  A->>A: 只读调研和风险识别
+  A->>P: 写入计划
+  P->>V: 检查遗漏、风险、验证方式
+  V-->>A: 通过或要求补充
+  A-->>U: 展示计划并等待确认
+  U->>A: 确认执行
+  A->>E: 按计划修改和验证
+  E-->>U: 输出结果、证据、剩余风险
+```
+
+学习本章时优先看每个阶段的“产物”：
+
+| 阶段 | 产物 | 判断标准 |
+|------|------|----------|
+| 调研 | 相关文件、调用链、约束 | 是否足以支持方案选择 |
+| 计划 | 步骤、文件范围、风险、验证方式 | 是否能交给另一个执行者照着做 |
+| 审查 | 计划缺口或通过结论 | 是否发现遗漏和不可验证步骤 |
+| 执行 | 代码/配置变更 | 是否严格落在计划范围内 |
+| 验证 | 命令输出、检查清单、风险说明 | 是否能证明执行结果 |
+
 ## 14.1 Plan 模式的架构
 
 Plan 模式解决的是复杂任务的偏航问题。Agent 如果直接执行，可能在需求未澄清、风险未识别、验证方式未确定时就开始改文件。

@@ -14,6 +14,56 @@
 - 理解启动性能优化为什么要关注并行预取、延迟加载和惰性 schema。
 - 知道 token 成本追踪和缓存优化如何影响 Agent 生产成本。
 
+## 13.0 先看全景：性能不是一个指标
+
+读这一章时不要只盯着“模型输出快不快”。Agent Harness 的性能由多条路径共同决定：模型首 token、流式渲染、工具并发、启动路径、上下文大小、缓存命中和 token 成本。
+
+```mermaid
+flowchart TD
+  U["用户输入"] --> Startup["启动路径<br/>配置、模块、keychain、schema"]
+  Startup --> Build["构造请求<br/>system / messages / tools / context"]
+  Build --> API["模型 API 流"]
+  API --> First["首 token 延迟"]
+  API --> Stream["持续 token 输出"]
+  Stream --> Detect["tool_use 检测"]
+  Detect --> Exec["StreamingToolExecutor"]
+  Exec --> Parallel{"工具可并发？"}
+  Parallel -->|"是"| P["并行执行"]
+  Parallel -->|"否"| S["串行执行"]
+  P --> Result["结果按顺序回填"]
+  S --> Result
+  Result --> Usage["usage / cache 账本"]
+  Usage --> Next{"继续下一轮？"}
+  Next -->|"是"| Build
+  Next -->|"否"| Done["最终输出"]
+
+  classDef latency fill:#ff9800,stroke:#e65100,color:#fff
+  classDef stream fill:#4a90d9,stroke:#2c5f8a,color:#fff
+  classDef tool fill:#8fbc8f,stroke:#5a8a5a,color:#fff
+  classDef cost fill:#ce93d8,stroke:#7b1fa2,color:#fff
+
+  class Startup,First latency
+  class API,Stream,Detect stream
+  class Exec,Parallel,P,S,Result tool
+  class Usage cost
+```
+
+读图结论：
+
+- “流式输出”解决的是感知延迟和中间状态可见，不等于总耗时一定变短。
+- “工具并发”只对并发安全工具有效，写文件、共享状态、顺序依赖仍然要串行。
+- “缓存命中”影响的不只是成本，也会影响后续请求延迟。
+
+### 性能问题先定位到哪一段
+
+| 现象 | 优先排查 | 对应小节 |
+|------|----------|----------|
+| 一开始很久没有输出 | 启动路径、首 token、请求构造过重 | 13.1、13.3 |
+| token 已输出但工具迟迟不动 | tool_use 检测、参数 JSON 拼接、权限等待 | 13.1、13.2 |
+| 多个工具看起来互相阻塞 | 并发安全判断、串行工具、结果顺序缓冲 | 13.2 |
+| 成本突然升高 | usage 累加、缓存断裂、上下文变大 | 13.4、13.5 |
+| fork 后缓存命中下降 | system/tool/messages 前缀是否字节级一致 | 13.5 |
+
 ## 13.1 流式 API 交互
 
 流式架构的目标不是让输出“看起来更快”，而是让 Agent 的中间过程可观察、可中断、可调度。

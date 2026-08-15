@@ -16,6 +16,84 @@
 - 用 Research、Synthesis、Implementation、Verification 四阶段工作流拆解复杂任务。
 - 判断 Coordinator 模式和 Fork 模式各自适合什么场景。
 
+## 10.0 先看全景：Coordinator 到底多了什么
+
+第 9 章已经讲过 Subagent 和 Fork。读第 10 章时最容易混淆的是：Coordinator 不是“再多开几个 Subagent”，而是把多 Agent 协作升级成一个有中心调度、有共享空间、有阶段产物的团队工作流。
+
+可以先用这张图建立整体位置：
+
+```mermaid
+flowchart TD
+  U["用户给出复杂目标"] --> C["Coordinator<br/>理解目标、拆分任务、制定规格"]
+  C --> R1["Research Worker<br/>调查模块 A"]
+  C --> R2["Research Worker<br/>调查模块 B"]
+  C --> R3["Research Worker<br/>调查约束和风险"]
+  R1 --> S["Scratchpad<br/>共享中间成果"]
+  R2 --> S
+  R3 --> S
+  S --> C
+  C --> Spec["Implementation Spec<br/>统一实施规格"]
+  Spec --> I1["Implementation Worker<br/>修改明确文件范围"]
+  Spec --> I2["Verification Worker<br/>验证明确检查项"]
+  I1 --> S
+  I2 --> S
+  S --> C
+  C --> Out["给用户交付综合结果"]
+
+  classDef coordinator fill:#4a90d9,stroke:#2c5f8a,color:#fff
+  classDef worker fill:#8fbc8f,stroke:#5a8a5a,color:#fff
+  classDef artifact fill:#ff9800,stroke:#e65100,color:#fff
+  classDef user fill:#ce93d8,stroke:#7b1fa2,color:#fff
+
+  class C coordinator
+  class R1,R2,R3,I1,I2 worker
+  class S,Spec artifact
+  class U,Out user
+```
+
+读图结论：
+
+- Coordinator 的核心产物不是“更多回复”，而是任务拆分、共享发现、统一规格和最终综合。
+- Worker 的核心职责不是互相聊天，而是各自完成明确任务，并把结果写到可复用位置。
+- Scratchpad 不是普通日志，而是 Coordinator 跨阶段整合事实的共享证据板。
+
+本章可以按三个问题读：
+
+| 问题 | 对应小节 | 不需要死记的内容 |
+|------|----------|------------------|
+| 什么时候进入 Coordinator？ | 10.1、10.7 | 具体 feature gate 名称可以查 |
+| Coordinator 和 Worker 怎么分工？ | 10.2、10.3、10.4 | 工具常量名不需要背 |
+| 多 Worker 失败或冲突怎么办？ | 10.5、10.6 | 具体实现函数名只需能识别 |
+
+### Coordinator / Worker 责任边界
+
+```mermaid
+flowchart LR
+  subgraph C["Coordinator 负责"]
+    C1["拆任务"]
+    C2["分配 Worker"]
+    C3["读取 Scratchpad"]
+    C4["写统一规格"]
+    C5["综合结果"]
+    C6["处理失败和部分完成"]
+  end
+
+  subgraph W["Worker 负责"]
+    W1["读取代码"]
+    W2["搜索资料"]
+    W3["修改文件"]
+    W4["运行验证"]
+    W5["写阶段报告"]
+  end
+
+  C2 --> W1
+  W5 --> C3
+  C4 --> W3
+  W4 --> C5
+```
+
+如果只记一句话：Coordinator 管“谁做什么、结果怎么合并”，Worker 管“把被分配的事情做完并留下证据”。
+
 ## 10.1 协调器架构
 
 Coordinator 模式的核心是“协调者不亲自执行开发动作，而是管理工作者”。它像工程项目里的项目经理：不亲自写每一行代码，但要知道任务如何拆分、谁负责什么、哪些工作可以并行、哪些必须等待、失败后如何调整。
