@@ -15,7 +15,71 @@
 - 掌握工具编排引擎如何在并行性、安全性和顺序性之间取平衡。
 - 理解 `StreamingToolExecutor` 为什么能降低工具调用等待时间。
 
-## 3.1 工具定义协议
+## 3.1 先看全景：模型意图如何变成真实动作
+
+第 2 章讲的是对话循环如何发现 `tool_use`。第 3 章讲的是：一旦模型产生了 `tool_use`，Harness 如何把它变成一次真实、可控、可回填的动作。
+
+先看完整路径：
+
+```mermaid
+flowchart TD
+  A[模型产生 tool_use] --> B[查找工具注册中心]
+  B --> C{工具是否对模型可见?}
+  C -->|否| C1[不暴露给模型或返回不可用]
+  C -->|是| D[参数 Schema 校验]
+  D --> E{参数是否合法?}
+  E -->|否| E1[生成参数错误消息]
+  E -->|是| F[权限检查]
+  F --> G{是否允许执行?}
+  G -->|否| G1[把拒绝原因反馈给模型]
+  G -->|是| H[调度执行工具]
+  H --> I[产出 tool_result]
+  I --> J[回填 messages]
+  J --> K[进入下一轮 Turn]
+```
+
+读图时抓住三条线：
+
+1. 模型只表达意图：它说“我要调用某个工具”。
+2. Harness 负责把意图变成受控执行：查找、校验、权限、调度。
+3. 工具结果必须回填：否则下一轮模型不知道真实世界发生了什么。
+
+### 用 `Read(package.json)` 走一遍
+
+```mermaid
+sequenceDiagram
+  participant M as 模型
+  participant L as 对话循环
+  participant R as 工具注册中心
+  participant P as 权限管线
+  participant T as ReadTool
+  participant N as 下一轮模型
+
+  M-->>L: tool_use: Read(package.json)
+  L->>R: 查找 ReadTool
+  R-->>L: 返回 Tool 运行时对象
+  L->>L: 校验 path 参数
+  L->>P: 检查 Read 权限
+  P-->>L: allow
+  L->>T: 执行读取
+  T-->>L: tool_result: 文件内容
+  L->>L: append tool_result to messages
+  L->>N: 携带 package.json 内容继续下一轮
+```
+
+这个例子说明：工具系统不是“模型直接执行函数”。模型只发出结构化请求，真正的执行权在 Harness 手里。
+
+### 本章内容不需要全部记忆
+
+| 学习等级 | 内容 | 要求 |
+|----------|------|------|
+| 必须理解 | 工具调用生命周期、工具结果回填、工具过滤 vs 权限检查 | 能用自己的话讲清楚 |
+| 看到能识别 | `Tool`、`ToolDef`、`buildTool`、`runTools`、`StreamingToolExecutor` | 读源码时知道它们大概负责什么 |
+| 查阅即可 | 泛型参数、完整工具清单、全部工具状态字段 | 使用时回来查表，不需要背 |
+
+先理解工具调用路径，再把 API 名称对应到路径节点。不要一开始就背 `Tool<Input, Output, Progress>`。
+
+## 3.2 工具定义协议
 
 Claude Code 的每个工具都遵循统一类型契约。原课程把这个契约称为工具系统的基石。
 
@@ -41,6 +105,44 @@ Claude Code 的每个工具都遵循统一类型契约。原课程把这个契�
 | `Tools` | 工具集合 | 表示 Harness 当前可用工具池 |
 | `ToolDef` | 发送给模型的工具定义 | 让模型知道工具名称、描述和参数 |
 | `buildTool` | 工具构造工厂 | 给工具补齐默认行为和类型约束 |
+
+最容易混淆的是 `ToolDef` 和 `Tool`：
+
+```mermaid
+flowchart LR
+  subgraph ModelSide[模型侧]
+    D[ToolDef<br/>给模型看的工具说明书]
+    D1[name]
+    D2[description]
+    D3[input_schema]
+    D --> D1
+    D --> D2
+    D --> D3
+  end
+
+  subgraph RuntimeSide[Harness 运行时]
+    T[Tool<br/>真正执行的工具对象]
+    T1[inputSchema]
+    T2[isReadOnly]
+    T3[isConcurrencySafe]
+    T4[call / render / interrupt]
+    T --> T1
+    T --> T2
+    T --> T3
+    T --> T4
+  end
+
+  D -.模型基于说明生成 tool_use.-> TU[tool_use]
+  TU --> T
+```
+
+读图结论：
+
+```text
+模型看到的是 ToolDef。
+Harness 执行的是 Tool。
+tool_use 是两者之间的桥。
+```
 
 `Tool` 使用泛型拆分输入、输出和进度数据。这种设计不是类型炫技，而是把三个关注点分开：
 
@@ -83,7 +185,7 @@ Zod Schema 有双重作用：
 
 对自研 Harness 来说，`buildTool` 的启发是：不要让每个工具重复实现一堆样板逻辑。应该提供一个工具工厂，让简单工具只关注核心执行，复杂工具再显式覆盖高级行为。
 
-## 3.2 工具注册与动态发现
+## 3.3 工具注册与动态发现
 
 工具定义只是第一步。Harness 还需要知道当前有哪些工具、哪些工具能暴露给模型、哪些工具应该延迟加载。
 
@@ -164,9 +266,70 @@ Zod Schema 有双重作用：
 
 排序也不是细节。工具列表顺序稳定，有助于 prompt 缓存。如果每次工具顺序不同，缓存命中会下降。
 
-## 3.3 核心工具深度解析
+### 工具过滤 vs 权限检查
+
+工具过滤和权限检查都和安全有关，但发生时间不同。
+
+```mermaid
+flowchart TD
+  A[完整工具池] --> B[工具过滤]
+  B --> C[发送给模型的 ToolDef 列表]
+  C --> D[模型产生 tool_use]
+  D --> E[权限检查]
+  E --> F{是否允许本次执行?}
+  F -->|允许| G[执行 Tool]
+  F -->|拒绝| H[返回拒绝原因]
+
+  B -.调用模型前.-> C
+  E -.工具执行前.-> F
+```
+
+| 机制 | 发生时间 | 决定什么 | 典型问题 |
+|------|----------|----------|----------|
+| 工具过滤 | 调用模型前 | 模型能不能看见工具 | 这个工具是否应该出现在当前上下文里？ |
+| 权限检查 | 工具执行前 | 这次调用能不能真的执行 | 这次参数、路径、命令是否允许？ |
+
+一句话区分：
+
+```text
+过滤控制“可见性”。
+权限控制“执行权”。
+```
+
+如果一个工具本来就不该使用，最好在过滤阶段不暴露给模型。如果工具通常可用，但某次调用参数有风险，就在权限阶段拦截。
+
+## 3.4 核心工具深度解析
 
 本节不是逐个背工具列表，而是理解不同工具为什么这样设计。
+
+先看风险阶梯：
+
+```mermaid
+flowchart LR
+  R[低风险<br/>Read / Glob / Grep<br/>观察为主] --> E[中风险<br/>Edit<br/>修改已有内容]
+  E --> W[高风险<br/>Write<br/>创建或覆盖文件]
+  W --> B[最高风险<br/>Bash<br/>任意命令入口]
+
+  classDef low fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef mid fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef high fill:#FEF2F2,stroke:#DC2626,color:#111827
+  classDef max fill:#F5F3FF,stroke:#7C3AED,color:#111827
+  class R low
+  class E mid
+  class W high
+  class B max
+```
+
+这张图不是说 Read 永远安全、Bash 永远不能用，而是说明默认风险倾向不同：
+
+| 工具类型 | 副作用风险 | 并发倾向 | 权限倾向 |
+|----------|------------|----------|----------|
+| Read / Glob / Grep | 低，主要观察信息 | 通常可并发 | 通常较宽松 |
+| Edit | 中，会修改已有文件 | 谨慎并发 | 需要确认修改范围 |
+| Write | 高，可能创建或覆盖文件 | 通常串行 | 需要更强确认 |
+| Bash | 最高，命令语义复杂 | 默认保守串行 | 高风险确认 |
+
+后面分别看 Bash、文件三件套、搜索工具和 AgentTool 时，都可以回到这张风险阶梯。
 
 ### BashTool：命令执行的瑞士军刀
 
@@ -227,7 +390,7 @@ AgentTool 是进入多 Agent 协作的入口。它让主 Agent 可以派出子�
 
 这就是后续 Subagent/Fork 章节要展开的内容。这里先记住：AgentTool 是工具系统和多 Agent 编排之间的桥。
 
-## 3.4 工具编排引擎
+## 3.5 工具编排引擎
 
 模型可能在一轮响应里请求多个工具。Harness 必须决定这些工具怎么执行。
 
@@ -264,6 +427,26 @@ AgentTool 是进入多 Agent 协作的入口。它让主 Agent 可以派出子�
 批次 2：Bash(ls)                串行
 批次 3：Read(c.ts)              等 Bash 之后再读
 ```
+
+换成图更直观：
+
+```mermaid
+flowchart TD
+  I[输入 tool_use 列表<br/>Read(a), Read(b), Bash(ls), Read(c), Edit(d)] --> B1[Batch 1<br/>Read(a) + Read(b)<br/>并行执行]
+  B1 --> B2[Batch 2<br/>Bash(ls)<br/>保守串行]
+  B2 --> B3[Batch 3<br/>Read(c)<br/>等待 Bash 后执行]
+  B3 --> B4[Batch 4<br/>Edit(d)<br/>写入类工具串行]
+  B4 --> O[按批次收集 tool_result]
+
+  classDef safe fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef risky fill:#FEF2F2,stroke:#DC2626,color:#111827
+  classDef output fill:#E8F3FF,stroke:#2563EB,color:#111827
+  class B1,B3 safe
+  class B2,B4 risky
+  class O output
+```
+
+读图结论：调度器不是只看“谁先完成”，而是先按风险把工具分批。安全批次可以并行，危险批次要保守串行，最终还要收集成下一轮能理解的结果。
 
 为什么 `Read(c.ts)` 不能和 `Bash(ls)` 同批？因为 Bash 可能有副作用。即使命令看起来只是 `ls`，调度器如果基于工具类型而不是命令语义做保守判断，会更安全。否则文件读取可能看到 Bash 执行前后的不确定状态。
 
@@ -326,6 +509,23 @@ StreamingToolExecutor 更激进：模型流式输出 tool_use 块时，就可以
 
 两条路径都必须保证同一件事：工具执行后对上下文的修改要传播回对话循环。例如工具写了文件，文件缓存也要更新；工具读了文件，后续上下文可能要知道这个文件已经被观察过。
 
+工具结果也有两条消费路径：
+
+```mermaid
+flowchart TD
+  TR[tool_result] --> UI[UI / Trace 路径]
+  TR --> MSG[messages 回填路径]
+
+  UI --> Render[展示工具进度、摘要、错误和结果]
+  UI --> Audit[记录执行证据]
+
+  MSG --> Append[追加到对话消息]
+  Append --> Next[下一轮 Turn 的模型上下文]
+  Next --> Reason[模型基于结果继续推理]
+```
+
+读图结论：工具结果不是只给用户看的日志。它必须进入下一轮模型上下文，否则模型无法基于真实执行结果继续行动。
+
 ## 实战练习
 
 ### 练习一：实现一个自定义工具
@@ -366,23 +566,25 @@ Read(a.ts), Grep(TODO), FileEdit(a.ts), Glob(*.md), Bash(npm test), Read(b.ts)
 
 ## 关键要点
 
-1. 工具系统的核心不是“能调用函数”，而是统一协议。名称、schema、权限、执行、渲染共同构成工具契约。
+1. 工具调用生命周期是本章主线：模型产生 `tool_use`，Harness 查找工具、校验参数、检查权限、调度执行，最后把 `tool_result` 回填到下一轮 messages。
 
-2. `buildTool` 体现“显式声明，安全默认”。工具必须主动声明自己只读或并发安全，否则默认保守处理。
+2. 工具系统的核心不是“能调用函数”，而是统一协议。`ToolDef` 是给模型看的说明书，`Tool` 是 Harness 运行时真正执行的对象。
 
-3. 工具注册中心是能力单一事实来源。条件注册、死代码消除和延迟发现共同控制工具何时存在、何时可见、何时加载。
+3. `buildTool` 体现“显式声明，安全默认”。工具必须主动声明自己只读或并发安全，否则默认保守处理。
 
-4. 工具过滤是权限系统的第一道防线。模型不该用的工具，最好一开始就不要让模型看到。
+4. 工具注册中心是能力单一事实来源。条件注册、死代码消除和延迟发现共同控制工具何时存在、何时可见、何时加载。
 
-5. BashTool 强大但危险，文件工具要区分读、改、写，搜索工具体现专门化优势，AgentTool 是多智能体能力入口。
+5. 工具过滤控制“模型能不能看见工具”，权限检查控制“这次调用能不能真的执行”。两者发生时间不同，不能混为一谈。
 
-6. 并发分区让工具执行在性能和安全之间取平衡。并发安全标记错误会直接影响可靠性。
+6. BashTool 强大但危险，文件工具要区分读、改、写，搜索工具体现专门化优势，AgentTool 是多智能体能力入口。
 
-7. StreamingToolExecutor 把工具执行前移到模型流式输出阶段，通过状态机保证并行执行和顺序产出的平衡。
+7. 并发分区让工具执行在性能和安全之间取平衡。并发安全标记错误会直接影响可靠性。
+
+8. StreamingToolExecutor 把工具执行前移到模型流式输出阶段，通过状态机保证并行执行和顺序产出的平衡。
 
 下一章会进入权限管线。工具系统给了 Agent 行动能力，权限管线决定这些行动在什么边界内可以发生。
 
-## 3.5 关键流程图补强
+## 3.6 关键流程图补强
 
 ### 图 1：工具注册管线
 
