@@ -19,7 +19,45 @@
 
 权限管线的核心思想是分层防御。一个工具调用从模型产生到真正执行，中间至少要经过参数、规则、上下文和用户确认等多个关口。
 
-可以把它理解为：
+先看完整决策路径：
+
+```mermaid
+flowchart TD
+  A[模型产生 tool_use] --> B[阶段 1<br/>validateInput<br/>参数 Schema 验证]
+  B --> C{参数是否合法?}
+  C -->|否| C1[拒绝：参数错误<br/>回填给模型修正]
+  C -->|是| D[阶段 2<br/>hasPermissionsToUseTool<br/>静态规则匹配]
+  D --> E{命中明确 allow / deny?}
+  E -->|deny| E1[拒绝：规则禁止]
+  E -->|allow| H[允许执行]
+  E -->|未命中| F[阶段 3<br/>checkPermissions<br/>上下文风险评估]
+  F --> G{能否自动决策?}
+  G -->|自动允许| H
+  G -->|自动拒绝| G1[拒绝：上下文风险]
+  G -->|需要确认| I[阶段 4<br/>交互式提示<br/>用户确认]
+  I --> J{用户选择}
+  J -->|允许一次/持久允许| H
+  J -->|拒绝| J1[拒绝：用户不同意]
+  H --> K[执行工具]
+  K --> L[tool_result 回填 messages]
+
+  classDef stage1 fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef stage2 fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef stage3 fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef stage4 fill:#FDF2F8,stroke:#DB2777,color:#111827
+  classDef allow fill:#F0FDF4,stroke:#16A34A,color:#111827
+  classDef deny fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class B stage1
+  class D stage2
+  class F stage3
+  class I stage4
+  class H,K,L allow
+  class C1,E1,G1,J1 deny
+```
+
+这张图的重点是：权限管线不是一个 `if allowed then run`，而是一组从低成本到高成本的判断。越早能拒绝或允许，越不需要进入后面的复杂判断。
+
+也可以把它压缩理解为：
 
 ```text
 模型提出工具调用
@@ -31,6 +69,32 @@
 ```
 
 每一层解决的问题不同。前一层越早拦截，后面的风险和成本越低。
+
+四个阶段的职责边界如下：
+
+```mermaid
+flowchart LR
+  S1[阶段 1<br/>参数是否合法?] --> S2[阶段 2<br/>规则是否明确?]
+  S2 --> S3[阶段 3<br/>结合上下文是否安全?]
+  S3 --> S4[阶段 4<br/>是否需要用户决定?]
+  S4 --> R[执行或拒绝]
+
+  classDef stage1 fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef stage2 fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef stage3 fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef stage4 fill:#FDF2F8,stroke:#DB2777,color:#111827
+  class S1 stage1
+  class S2 stage2
+  class S3 stage3
+  class S4 stage4
+```
+
+| 阶段 | 只回答什么问题 | 不负责什么 |
+|------|----------------|------------|
+| `validateInput` | 参数格式对不对 | 不判断是否安全 |
+| `hasPermissionsToUseTool` | 是否命中已有 allow / deny 规则 | 不做复杂语义分析 |
+| `checkPermissions` | 结合工具输入、目录、模式、Hook 等上下文是否可执行 | 不代替用户做所有高风险决定 |
+| 交互式提示 | 系统无法自动确定时，让用户明确决策 | 不应该频繁打断低风险动作 |
 
 ### 4.1.1 阶段一：validateInput - Zod Schema 验证
 
@@ -111,6 +175,31 @@ curl internal-api
 
 `PermissionContext` 可以理解为权限管线的“案卷”：一次工具调用进入权限系统时，所有判断需要的信息都应该装在这个上下文里。
 
+```mermaid
+flowchart TD
+  A[一次工具调用] --> C[PermissionContext<br/>权限判断案卷]
+  C --> T[工具名称<br/>例如 Bash / Read / Write]
+  C --> I[工具输入<br/>命令、路径、参数]
+  C --> W[工作目录<br/>项目边界]
+  C --> M[权限模式<br/>default / plan / auto / bubble]
+  C --> U[用户规则<br/>个人允许/拒绝]
+  C --> P[项目规则<br/>团队安全约定]
+  C --> H[Hook 结果<br/>外部策略]
+  C --> S[子智能体来源<br/>是否需要冒泡]
+  C --> D[最终权限决策]
+
+  classDef context fill:#F5F3FF,stroke:#7C3AED,color:#111827
+  classDef input fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef rule fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef decision fill:#FFF7ED,stroke:#EA580C,color:#111827
+  class C context
+  class T,I,W,M,S input
+  class U,P,H rule
+  class D decision
+```
+
+读图结论：权限判断不是只看工具名。`Read(src/index.ts)`、`Read(.env)`、`Bash(git status)`、`Bash(rm -rf dist)` 都可能是不同风险，因为输入、目录、规则和模式不同。
+
 ### 4.2.1 ToolPermissionContext 类型结构
 
 一个完整的工具权限上下文通常需要包含：
@@ -160,6 +249,41 @@ Hook 适合企业策略或项目规则，例如禁止访问某些路径。用户
 ## 4.3 权限模式谱系
 
 权限模式决定 Agent 默认如何处理工具调用。不同模式对应不同自动化程度和风险边界。
+
+先用一条坐标轴理解：
+
+```mermaid
+flowchart LR
+  P[plan<br/>只读优先<br/>适合先分析] --> D[default<br/>逐次确认<br/>适合普通使用]
+  D --> A[auto<br/>低风险自动批准<br/>依赖规则和分类器]
+  A --> B[bubble<br/>子智能体权限上交<br/>父级决策]
+  B --> X[bypassPermissions<br/>跳过常规权限<br/>风险最高]
+
+  classDef low fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef normal fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef auto fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef bubble fill:#FDF2F8,stroke:#DB2777,color:#111827
+  classDef high fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class P low
+  class D normal
+  class A auto
+  class B bubble
+  class X high
+```
+
+```text
+更保守 / 更适合分析  --------------------------------  更自动化 / 更高风险
+```
+
+| 模式 | 自动化程度 | 风险倾向 | 适合场景 |
+|------|------------|----------|----------|
+| `plan` | 低 | 低 | 先读代码、做计划、减少写操作 |
+| `default` | 中 | 中 | 普通开发，风险动作逐次确认 |
+| `auto` | 较高 | 中高 | 规则成熟、低风险动作自动化 |
+| `bubble` | 取决于父级 | 中 | 子智能体把权限请求交给主 Agent |
+| `bypassPermissions` | 最高 | 最高 | 隔离沙箱或用户明确承担风险 |
+
+注意：`bubble` 不是简单比 `auto` 更危险，它是多智能体场景下的权限上交机制。把它放在谱系中，是为了提醒读者它会改变“谁来做最终决策”。
 
 ### 4.3.1 default 模式：逐次确认
 
@@ -218,6 +342,35 @@ bubble 模式用于 Subagent 场景。
 BashTool 是权限系统最复杂的工具之一，因为它本身是通用命令执行入口。
 
 同一个 BashTool 可以执行安全命令，也可以执行高风险命令。因此 Bash 权限不能只看工具名，必须看命令语义。
+
+可以先看 Bash 权限决策树：
+
+```mermaid
+flowchart TD
+  A[Bash 命令] --> B{是否包含复杂 Shell 结构?}
+  B -->|是：管道/重定向/变量/子命令/逻辑操作符| C[提高风险等级<br/>保守解析]
+  B -->|否| D[提取命令前缀]
+  C --> D
+  D --> E{命中 deny 规则?}
+  E -->|是| R[拒绝执行]
+  E -->|否| F{命中 allow 规则?}
+  F -->|是| L[允许或低风险确认]
+  F -->|否| G{auto 模式下分类器判断低风险?}
+  G -->|是| L
+  G -->|否| U[请求用户确认]
+  U --> H{用户是否允许?}
+  H -->|是| L
+  H -->|否| R
+
+  classDef risk fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef allow fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef deny fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class C,G,U risk
+  class L allow
+  class R deny
+```
+
+读图结论：Bash 权限不是简单匹配字符串。复杂 Shell 结构会提高风险，明确拒绝规则优先于自动审批，分类器只能辅助低风险判断，不能覆盖硬性拒绝规则。
 
 ### 4.4.1 命令分类与通配符匹配
 
