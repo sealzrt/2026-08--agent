@@ -1,5 +1,3 @@
-# Harness 可视化入门教程
-
 > 10 章 + 28 张高清图解 + Python/DeepSeek 代码，从零理解 Agent Harness。
 
 ---

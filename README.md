@@ -12,7 +12,7 @@
 模型负责思考，Harness 负责让思考变成可执行、可控、可扩展的行动。
 ```
 
-仓库包含四条学习线路、一份可视化教程和两份调研文档，覆盖从产品选型到工程实现的完整路径。
+仓库包含四条学习线路、一份可视化教程、两份调研文档和一份开源项目源码分析，覆盖从产品选型到工程实现的完整路径。
 
 ---
 
@@ -40,6 +40,11 @@
 │   ├── ch01 ~ ch11/            #   LLM 基础、工具调用、Agent 范式、记忆、RAG…
 │   ├── ch12-16/                #   多 Agent、评估、RL、安全、落地
 │   └── ch17-18/                #   前沿与展望
+│
+├── deepseek-harness-docs/      # 源码分析：DeepSeek Harness 架构与插件系统
+│   ├── architecture.md         #   项目架构全景（3 张图解）
+│   ├── plugin-system.md        #   插件系统详解（3 张图解）
+│   └── images/                 #   6 张高清架构图
 │
 ├── learn-claude-code-study-plan.md  # 原课程学习方案与章节地图
 ├── agent-infra-products.md          # Agent Infra 产品与开源项目调研
@@ -139,12 +144,14 @@ python stage-1-让Agent行动起来/s01-agent-loop.py
 | **快速路径** | 抓主线 | s01 → s02 → s03 → s06 → s08 → s10 → s15 |
 | **完整路径** | 系统学习 | s01 → s17 顺序阅读，每章 30-60 分钟 |
 | **图解入门** | 零基础看图 | harness-visual-tutorial ch01 → ch10 |
+| **源码研读** | 理解真实框架 | deepseek-harness-docs architecture → plugin-system |
 | **产品选型** | 方案调研 | 先读 `agent-infra-products.md`，再按兴趣深入 |
 
 ---
 
 ## 配套文档
 
+- [deepseek-harness-docs/](deepseek-harness-docs/README.md) — DeepSeek Harness 开源项目架构与插件系统分析（6 张高清图解）
 - [learn-claude-code-study-plan.md](learn-claude-code-study-plan.md) — 原课程 20 章的学习方案与阅读指南
 - [agent-infra-products.md](agent-infra-products.md) — Agent Infra 商业产品与开源项目对比
 - [ai-infra-and-managed-agents.md](ai-infra-and-managed-agents.md) — AI 基础设施与 Managed Agents 概述

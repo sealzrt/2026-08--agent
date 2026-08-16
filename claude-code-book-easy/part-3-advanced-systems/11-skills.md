@@ -15,6 +15,42 @@
 - 能够设计一个小而专注的自定义技能，并判断它应该放在用户级、项目级还是插件级。
 - 识别技能系统中的安全边界：来源可信度、Shell 内联、文件提取、符号链接和 gitignore 过滤。
 
+## 11.0 先看全景：Skill 是“任务知识包”，不是工具本身
+
+本章容易读混，是因为 Skill、Command、Agent、Plugin、MCP 都在扩展 Agent 能力，但它们扩展的位置不同。建议先按下面的顺序理解：
+
+1. Skill：把某类任务的做法、模板、流程和参考资料封装起来。
+2. Command：给用户一个显式入口，通常用来触发固定流程。
+3. Agent：把任务交给一个带独立上下文和工具边界的子智能体。
+4. Plugin：把 Skill、Command、Agent、Hook 等打包分发。
+5. MCP：让外部服务通过协议暴露工具和资源。
+
+```mermaid
+flowchart LR
+  U[用户任务] --> C{入口是什么}
+  C -->|任务方法| S[Skill<br/>知识/流程/模板]
+  C -->|显式命令| CMD[Command<br/>固定入口]
+  C -->|独立执行者| A[Agent<br/>子任务运行者]
+  C -->|外部能力| M[MCP<br/>协议工具/资源]
+  P[Plugin<br/>打包分发单元] --> S
+  P --> CMD
+  P --> A
+  P --> M
+
+  classDef entry fill:#E8F3FF,stroke:#2563EB,color:#111827
+  classDef knowledge fill:#ECFDF3,stroke:#16A34A,color:#111827
+  classDef actor fill:#F5F3FF,stroke:#7C3AED,color:#111827
+  classDef protocol fill:#FFF7ED,stroke:#EA580C,color:#111827
+  classDef package fill:#FEF2F2,stroke:#DC2626,color:#111827
+  class U,C entry
+  class S,CMD knowledge
+  class A actor
+  class M protocol
+  class P package
+```
+
+后面的 frontmatter、加载路径、动态发现和插件缓存，都可以放回这张图里理解：它们不是新的概念，而是在回答“这个能力从哪里来、什么时候加载、能访问什么、如何被分发”。
+
 ## 11.1 技能系统架构
 
 技能系统解决的问题是：Agent 不能把所有任务知识都塞进基础系统提示里。
