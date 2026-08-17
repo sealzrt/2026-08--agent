@@ -23,6 +23,16 @@ dsh 的核心特点：餐厅里"所有东西都是可插拔的模块"
   换收银系统？换个插件就行
 ```
 
+本章建议先抓住三条主线：
+
+| 主线 | 你要理解的问题 | 对应章节 |
+|------|----------------|----------|
+| 运行主线 | 用户输入后，dsh 如何启动、加载插件、进入 Agent 循环 | 四、五 |
+| 能力主线 | Agent 为什么能调用模型、文件、Shell、Skill、Workflow 等能力 | 二、六、七 |
+| 治理主线 | 会话、权限、日志、错误处理如何让 Agent 可恢复、可审计 | 八、九、十 |
+
+后面看到很多包名时，不需要先记 API。先判断它属于哪条主线，再看它在启动、能力扩展或治理里承担什么职责。
+
 ---
 
 ## 一、项目概览
@@ -177,10 +187,11 @@ deepseek-harness/
     ↓
 步骤 4：拼菜单（composeProfile 组合配置层）
     配置从底到顶叠加：
-      ① Bundle 层     — 默认配置（标准菜单）
-      ② 用户层        — 用户自定义（你的口味偏好）
-      ③ 家目录层      — 全局偏好（你在家都加辣）
-      ④ --patch 覆盖  — 临时调整（今天不加辣）
+      ① Bundle patch 层     — profile 声明的默认插件组合
+      ② Profile patch 层    — 当前 profile 的 cordis.patch.yml
+      ③ Home patch 层       — $DSH_HOME/cordis.patch.yml，全局偏好
+      ④ --patch overlay 层  — 命令行临时覆盖，可重复传入
+      ⑤ Telemetry patch     — 遥测关闭等运行时开关生成的补丁
     ↓
 步骤 5：开店（boot 初始化 Cordis 框架）
     ↓
@@ -198,7 +209,7 @@ deepseek-harness/
 dsh web
   → bin.ts 解析参数
     → profile-boot.ts 加载配置
-      → 叠加 4 层配置
+      → 叠加 bundle/profile/home/overlay/telemetry patch
         → Cordis 框架启动
           → Loader 挂载插件
             → 应用接管
@@ -253,14 +264,14 @@ while (还没完成任务) {
 类比：服务员可以使用的设备
 
 工具箱里有：
-  🔨 bash       — 执行命令行
-  📁 read_file  — 读文件
-  ✏️  write_file — 写文件
-  🔍 search     — 搜索文件
-  🌐 web_search — 搜索网页
-  🤖 subagent   — 派子代理干活
-  📋 todo       — 管理待办事项
-  ⚙️  workflow   — 执行工作流
+  🔨 bash        — 执行命令行
+  📁 read        — 读文件
+  ✏️  write / edit — 写文件 / 修改文件
+  🔍 glob / grep — 搜索文件路径和内容
+  🌐 web_search  — 搜索网页
+  🤖 subagent    — 派子代理干活
+  📋 todo_write  — 管理待办事项
+  ⚙️  workflow    — 执行工作流
   ... 还有十几个
 ```
 
@@ -318,7 +329,7 @@ Consumer:
 
 ![包依赖关系](images/dsh-package-map.png)
 
-dsh 有 **60 多个子包**（`@deepseek-ai/dsh-*`），按职责分为四圈：
+dsh 有大量 workspace 子包（当前 `packages/` 下超过 200 个 `package.json`），按职责可以先粗略分为四圈：
 
 ### 核心圈（5 个包）— 不能缺的
 
@@ -456,28 +467,18 @@ dsh 回   → "完成了，结果是..."
 ```
 
 ```python
-from deepseek_harness import HarnessClient
+from deepseek_harness import DeepSeekHarness
 
-# 启动 dsh 进程
-client = HarnessClient()
-client.start()
-
-# 初始化
-result = client.initialize(
+with DeepSeekHarness(
     cwd="/你的项目路径",
-    provider="deepseek",
-    model="deepseek-chat"
-)
-
-# 发送消息
-message_id = client.session_prompt(
-    result.session_id,
-    [{"type": "text", "text": "帮我写个排序函数"}]
-)
-
-# 关闭
-client.close()
+    provider="deepseek-official",
+    model="deepseek-v4-flash",
+) as harness:
+    result = harness.run("帮我写个排序函数")
+    print(result.final_response)
 ```
+
+源码里也提供底层 `HarnessClient`，它通过 JSON-RPC 的 `initialize` 和 `session/prompt` 与运行时通信；日常使用建议先从高层 `DeepSeekHarness` 开始，因为它会帮你管理 session、通知、空闲等待和最终回复提取。
 
 ---
 

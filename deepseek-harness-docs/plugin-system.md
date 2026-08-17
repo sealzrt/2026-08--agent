@@ -28,6 +28,16 @@ dsh 里所有功能都是"积木块"（插件）：
   • 甚至连"系统提示词"也是插件组装的
 ```
 
+阅读本章时先区分三层：
+
+| 层次 | 回答的问题 | 例子 |
+|------|------------|------|
+| 插件机制 | 一个功能如何被加载、运行、卸载 | Context、Fiber、Effect、配置热重载 |
+| 能力接口 | 多个实现如何遵守同一套接口 | Shell Definition + bash/pwsh Provider |
+| Agent 工具 | 最终暴露给模型调用的动作是什么 | `bash`、`read`、`workflow` |
+
+很多困惑来自把这三层混在一起。比如 `dsh-tool-bash` 不是 Shell 能力本身，它更像是把 Shell 能力包装成 Agent 可以调用的 `bash` 工具。
+
 ---
 
 ## 一、为什么需要插件系统
@@ -252,12 +262,13 @@ ctx.effect(() => {
 ```text
 类比：点菜的时候，你可以一层层加需求
 
-最终的配置 = 4 层叠加：
+实际源码里的 profile 启动会把几类 patch 按顺序叠加：
 
-第 1 层：默认配置（标准套餐）
-第 2 层：你的个人偏好（"我一般不加辣"）
-第 3 层：今天特殊要求（"今天加辣"）
-第 4 层：临时覆盖（"再加一份甜品"）
+第 1 层：Bundle patch（标准套餐）
+第 2 层：Profile patch（这个 profile 自己的 cordis.patch.yml）
+第 3 层：Home patch（$DSH_HOME/cordis.patch.yml，全局偏好）
+第 4 层：--patch overlay（本次命令临时加菜）
+第 5 层：运行时生成的 patch（例如 telemetry 开关）
 
 上面的层会覆盖下面的层。
 ```
@@ -297,30 +308,33 @@ dsh 的原则：配置错了，立刻告诉你，不偷偷用默认值
 类比：管理餐厅的供应商
 
 # 添加新供应商
-dsh plugin add @deepseek-ai/dsh-tool-my-custom
+dsh plugin --profile web add @deepseek-ai/dsh-tool-my-custom
 
 # 移除供应商
-dsh plugin remove @deepseek-ai/dsh-tool-my-custom
+dsh plugin --profile web remove @deepseek-ai/dsh-tool-my-custom
 
 # 看看现在有哪些供应商
-dsh plugin list
+dsh plugin --profile web list
 
 # 更新所有供应商到最新版
-dsh plugin update
+dsh plugin --profile web update
 ```
 
 怎么判断一个 npm 包是不是 dsh 插件？
 
 ```text
-看 package.json 里有没有 dsh.bundle 标记：
+先看 package.json 里有没有 dsh 扩展元数据。
+如果是 profile bundle，通常会声明 dsh.bundle.patch：
 
 {
   "name": "my-plugin",
   "dsh": {
-    "bundle": { "patch": true }   ← 有这个标记就是插件
+    "bundle": { "patch": "./cordis.patch.yml" }
   }
 }
 ```
+
+注意：`dsh` 字段不只服务于一种扩展。源码里还可以看到 `dsh.client.inject` 这类客户端注入元数据。因此更准确的说法是：`dsh` 字段说明这个包能被 dsh 的某类装配机制识别，具体看里面是 `bundle`、`client` 还是其他键。
 
 ---
 
@@ -332,18 +346,18 @@ dsh plugin update
 |------|--------|-----------|
 | dsh-tool-bash | `bash` | 执行 bash 命令 |
 | dsh-tool-pwsh | `pwsh` | 执行 PowerShell 命令 |
-| dsh-tool-fs | `read_file` / `write_file` | 读写文件 |
-| dsh-tool-fs-search | `search_files` | 搜索文件内容 |
+| dsh-tool-fs | `read` / `read_image` / `write` / `edit` | 读写和修改文件 |
+| dsh-tool-fs-search | `glob` / `grep` | 搜索文件路径和内容 |
 | dsh-tool-str-replace-editor | `str_replace_editor` | 精确替换文件中的文字 |
 | dsh-tool-web | `web_search` / `web_fetch` | 搜索网页 / 抓取网页 |
 | dsh-tool-subagent | `subagent` | 派子代理去做独立任务 |
 | dsh-tool-skill | `skill` | 调用预定义的技能 |
 | dsh-tool-workflow | `workflow` | 执行工作流 |
 | dsh-tool-todo | `todo_write` | 管理待办事项 |
-| dsh-tool-goal | `goal` | 设定和管理目标 |
-| dsh-tool-ask-user | `ask_user` | 向用户提问 |
-| dsh-tool-jobs | `jobs` | 管理后台任务 |
-| dsh-tool-cordis | `cordis` | 修改自己的插件配置 |
+| dsh-tool-goal | `get_goal` / `create_goal` / `update_goal` | 设定和管理目标 |
+| dsh-tool-ask-user | `ask_user_question` | 向用户提问 |
+| dsh-tool-jobs | `job_output` / `job_list` / `job_kill` | 管理后台任务 |
+| dsh-tool-cordis | `cordis_inspect` / `cordis_define` / `cordis_run` / `cordis_stop` / `cordis_undefine` | 检查和临时修改当前运行时插件 |
 
 ### 能力插件（给 Agent 加能力）
 
