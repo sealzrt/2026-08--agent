@@ -24,6 +24,7 @@
 | [12-business-agent-workbook.md](12-business-agent-workbook.md) | **业务 Agent 实战练习册**：把场景拆解、流程、工具、样例、验收串成一条实操路径 | 0 张 |
 | [13-business-confirmation-ui.html](13-business-confirmation-ui.html) | **业务 Agent 用户确认页**：只展示最终用户需要看到的输入、建议、确认按钮、进度和结果 | 0 张 |
 | [14-business-reviewer-ui.html](14-business-reviewer-ui.html) | **业务 Agent 审核员页**：展示审核员需要看到的分类、风险、审计和确认链路 | 0 张 |
+| [15-local-vs-service-agent-landing.md](15-local-vs-service-agent-landing.md) | **本地 Agent 工具与服务 Agent 接口落地方案**：区分本地工具和服务接口两种形态，讲多用户隔离、并发、暂停恢复 | 10 张 |
 | [architecture.md](architecture.md) | 项目架构全景：分层设计、目录结构、启动流程、核心模块、包依赖关系 | 4 张 |
 | [plugin-system.md](plugin-system.md) | 插件系统详解：Cordis 核心概念、生命周期、通信模式、配置系统、开发指南 | 3 张 |
 | [archive-solution.md](archive-solution.md) | **档案馆落地方案**：两条业务流程编排、6 个自定义插件设计、四阶段实施路径 | 4 张 |
@@ -35,14 +36,15 @@
 1. 先读 [00-business-quickstart.md](00-business-quickstart.md)：先判断 dsh 适合什么业务场景，以及 MVP 怎么做。
 2. 再读 [01-business-landing-map.md](01-business-landing-map.md)：学习如何把业务需求拆成入口、工具、流程、人工确认和审计。
 3. 再读 [02-build-first-business-agent.md](02-build-first-business-agent.md)：用一个轻量业务场景练习 MVP 拆解。
-4. 再读 [03-mvp-delivery-playbook.md](03-mvp-delivery-playbook.md)：学习如何组织一次业务 Agent MVP 试点。
-5. 再读 [04-business-agent-patterns.md](04-business-agent-patterns.md)：学习常见业务 Agent 模式，判断场景该用只读、确认、流程、批处理还是审计优先。
-6. 再读 [05-business-case-library.md](05-business-case-library.md)：从客服、档案、运维、合同、财务、OA 等案例里找可迁移的模板。
-7. 再读 [06-from-mvp-to-production.md](06-from-mvp-to-production.md)：学习试点上线前要补哪些生产边界。
-8. 再读 [07-business-tool-design.md](07-business-tool-design.md)：学习怎么把业务动作设计成 Agent 可调用的工具。
-9. 再读 [08-business-workflow-design.md](08-business-workflow-design.md)：学习怎么把多个工具、分支、确认点和失败处理串成业务流程。
-10. 再读 [09-business-plugin-profile-design.md](09-business-plugin-profile-design.md)：学习业务 Tool、Workflow、规则和系统对接怎么打包成 Plugin，并通过 Profile 控制启动边界。
-11. 再读 [10-business-evaluation-testing.md](10-business-evaluation-testing.md)：学习怎么构造验收样例、做影子运行、沉淀回归测试，并判断是否进入试点。
+4. 再读 [15-local-vs-service-agent-landing.md](15-local-vs-service-agent-landing.md)：区分本地 Agent 工具和服务 Agent 接口，理解多用户隔离、并发和暂停恢复。
+5. 再读 [03-mvp-delivery-playbook.md](03-mvp-delivery-playbook.md)：学习如何组织一次业务 Agent MVP 试点。
+6. 再读 [04-business-agent-patterns.md](04-business-agent-patterns.md)：学习常见业务 Agent 模式，判断场景该用只读、确认、流程、批处理还是审计优先。
+7. 再读 [05-business-case-library.md](05-business-case-library.md)：从客服、档案、运维、合同、财务、OA 等案例里找可迁移的模板。
+8. 再读 [06-from-mvp-to-production.md](06-from-mvp-to-production.md)：学习试点上线前要补哪些生产边界。
+9. 再读 [07-business-tool-design.md](07-business-tool-design.md)：学习怎么把业务动作设计成 Agent 可调用的工具。
+10. 再读 [08-business-workflow-design.md](08-business-workflow-design.md)：学习怎么把多个工具、分支、确认点和失败处理串成业务流程。
+11. 再读 [09-business-plugin-profile-design.md](09-business-plugin-profile-design.md)：学习业务 Tool、Workflow、规则和系统对接怎么打包成 Plugin，并通过 Profile 控制启动边界。
+12. 再读 [10-business-evaluation-testing.md](10-business-evaluation-testing.md)：学习怎么构造验收样例、做影子运行、沉淀回归测试，并判断是否进入试点。
 12. 再读 [11-concept-cheatsheet.md](11-concept-cheatsheet.md)：遇到术语混淆时，回到这篇确认各概念的层次和关系。
 13. 再读 [12-business-agent-workbook.md](12-business-agent-workbook.md)：把前面的内容串成一条完整的实战练习路径。
 14. 再读 [archive-solution.md](archive-solution.md)：看一个更完整的业务场景如何从架构概念落到插件、工作流、系统集成和上线计划。
