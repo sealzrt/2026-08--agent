@@ -24,7 +24,7 @@
 | [12-business-agent-workbook.md](12-business-agent-workbook.md) | **业务 Agent 实战练习册**：把场景拆解、流程、工具、样例、验收串成一条实操路径 | 0 张 |
 | [13-business-confirmation-ui.html](13-business-confirmation-ui.html) | **业务 Agent 用户确认页**：只展示最终用户需要看到的输入、建议、确认按钮、进度和结果 | 0 张 |
 | [14-business-reviewer-ui.html](14-business-reviewer-ui.html) | **业务 Agent 审核员页**：展示审核员需要看到的分类、风险、审计和确认链路 | 0 张 |
-| [15-local-vs-service-agent-landing.md](15-local-vs-service-agent-landing.md) | **本地 Agent 工具与服务 Agent 接口落地方案**：区分本地工具和服务接口两种形态，讲多用户隔离、并发、暂停恢复 | 10 张 |
+| [15-local-vs-service-agent-landing.md](15-local-vs-service-agent-landing.md) | **本地 Agent 工具与服务 Agent 接口落地方案**：区分本地工具和服务接口两种形态，讲多用户隔离、并发、暂停恢复 | 13 张 |
 | [architecture.md](architecture.md) | 项目架构全景：分层设计、目录结构、启动流程、核心模块、包依赖关系 | 4 张 |
 | [plugin-system.md](plugin-system.md) | 插件系统详解：Cordis 核心概念、生命周期、通信模式、配置系统、开发指南 | 3 张 |
 | [archive-solution.md](archive-solution.md) | **档案馆落地方案**：两条业务流程编排、6 个自定义插件设计、四阶段实施路径 | 4 张 |

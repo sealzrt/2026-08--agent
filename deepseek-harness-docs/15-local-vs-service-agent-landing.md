@@ -32,6 +32,32 @@
 | 本地 Agent 工具 | 本机权限、工作区、命令安全、工具白名单 | 能不能读这个文件？能不能跑这个命令？会不会误删本地项目？ |
 | 服务 Agent 接口 | 多用户隔离、状态持久化、任务队列、权限校验、审计 | 用户 A 会不会看到用户 B 的上下文？审核任务会不会被重复处理？ |
 
+### 1.1 常见英文词速查
+
+后面会反复出现一些英文词。先把它们放在这里，读后文时就不用来回猜。
+
+| 英文词 | 中文理解 | 简单说明 |
+|--------|----------|----------|
+| `Agent` | 智能体 / 任务处理器 | 负责理解任务、组织上下文、决定下一步 |
+| `Tool` | 工具 / 可调用动作 | Agent 能执行的明确动作，例如查工单、写审计 |
+| `LLM` | 大语言模型 | 负责生成、判断、分类、总结 |
+| `Runner` | 执行器 | 真正推动 Agent 一步步运行的代码 |
+| `Turn` | 一轮处理 | Agent 针对某个 task 的一次执行循环 |
+| `session` | 会话 | 一次对话或一次业务处理的上下文边界 |
+| `task` | 任务 | 一条具体要处理的业务任务 |
+| `event` | 事件 | 用户输入、工具结果、审核决定等过程记录 |
+| `checkpoint` | 执行现场快照 | 暂停时保存当前做到哪一步，恢复时继续用 |
+| `Worker` | 后台执行器 | 后台真正执行 task 的进程或线程 |
+| `Worker Pool` | 后台执行器池 | 多个 Worker 一起处理多个 task |
+| `Job Queue` | 任务队列 | 存放等待执行或等待恢复的任务 |
+| `MCP` | 工具接入协议 | 一种标准化暴露 Tool 的方式 |
+| `API` | 接口 | 前端或系统调用后端能力的入口 |
+| `SSE` | 服务端事件流 | 后端持续向前端推送消息，常用于流式输出 |
+| `WebSocket` | 双向长连接 | 前后端可以持续互相发送消息 |
+| `tenant_id` | 租户 ID | 区分不同企业、业务线或空间 |
+| `permission_scope` | 权限范围 | 限制这次任务能访问什么、能执行什么 |
+| `idempotency_key` | 幂等键 | 防止同一个写入动作重复执行 |
+
 先看总图：
 
 ```mermaid
@@ -360,6 +386,114 @@ dsh 关心的是 Agent 怎么安全地调用 Tool
 MCP / HTTP / 本地插件 只是 Tool 的不同实现和接入方式
 ```
 
+### 3.4 聊天 Agent 前端怎么实时看到处理过程
+
+你看到的 Kimi、千问、豆包这类聊天 Agent，前端实时看到的通常不是“完整内部推理”，而是后端不断发出来的**事件流**。
+
+```text
+模型输出 token 流
+  -> 后端包装成状态事件
+  -> 前端实时渲染气泡、进度条、工具面板
+```
+
+前端通常会看到这些状态：
+
+- 正在输入
+- 正在思考
+- 正在调用工具
+- 工具已返回
+- 正在整理答案
+- 需要你确认
+- 已完成
+
+前端一般看不到这些内容：
+
+- 模型内部完整推理过程
+- 敏感中间值
+- 未脱敏的业务数据
+
+#### 3.4.1 事件流长什么样
+
+```mermaid
+flowchart LR
+  U[用户输入] --> A[Agent 开始处理]
+  A --> S1[stream token]
+  S1 --> S2[tool_call_start]
+  S2 --> S3[tool_call_result]
+  S3 --> S4[thinking_status_change]
+  S4 --> S5[needs_confirmation]
+  S5 --> S6[resume_after_confirmation]
+  S6 --> S7[final_answer]
+```
+
+典型事件可以是：
+
+```text
+message_start
+token_delta
+tool_call_start
+tool_call_result
+status_change
+needs_confirmation
+resume
+message_end
+```
+
+#### 3.4.2 前端怎么接
+
+常见有三种方式：
+
+| 方式 | 适合谁 | 特点 |
+|------|--------|------|
+| SSE | 聊天流式输出、单向推送 | 简单，适合“后端一直发、前端一直收” |
+| WebSocket | 要双向交互的 Agent | 适合确认、暂停、修改、实时状态同步 |
+| 轮询 | 低实时性任务 | 简单，但刷新不如流式自然 |
+
+#### 3.4.3 事件到 UI 的映射
+
+```mermaid
+sequenceDiagram
+  participant U as 用户
+  participant UI as 聊天前端
+  participant API as Agent API
+  participant W as Worker
+  participant T as Tool
+
+  U->>UI: 输入问题
+  UI->>API: 创建 task
+  API-->>UI: 返回 task_id
+  UI-->>U: 显示“正在输入”
+
+  W->>API: 推送 token_delta
+  API-->>UI: 流式更新气泡
+  UI-->>U: 显示“正在思考”
+
+  W->>T: 调用工具
+  T-->>W: 返回结果
+  W->>API: 推送 tool_call_result
+  API-->>UI: 更新工具面板
+  UI-->>U: 显示“工具已返回”
+
+  W->>API: 推送 needs_confirmation
+  API-->>UI: 显示确认卡
+  UI-->>U: 显示“等待确认”
+```
+
+#### 3.4.4 这件事对业务 Agent 的意义
+
+对业务 Agent 来说，这种实时展示很有用：
+
+- 让用户知道系统不是卡住了。
+- 让用户知道 Agent 正在执行哪一步。
+- 让用户在需要确认时及时介入。
+- 让审核员看到任务当前到了哪里。
+
+一句话：
+
+```text
+前端实时看到的不是 Agent 脑内过程，而是后端发出来的事件流和状态变化。
+```
+
 ---
 
 ## 4. 服务 Agent 怎么做用户隔离
@@ -600,41 +734,52 @@ where id = :task_id
 
 服务 Agent 遇到审核时，不应该让 HTTP 请求一直挂着。
 
+先把几个英文词翻译一下：
+
+| 英文词 | 中文理解 | 在这里的作用 |
+|--------|----------|--------------|
+| `checkpoint` | 执行现场快照 | 保存 Agent 已经做到哪一步、下一步该从哪里继续 |
+| `review_task` | 审核待办 | 给审核员页面展示的一条待处理任务 |
+| `decision` | 审核决定 | 审核员点了确认、修改、升级还是驳回 |
+| `resume job` | 恢复执行任务 | 审核完成后，重新投递一个任务，让 Agent 继续跑 |
+| `Worker` | 后台执行器 | 真正执行 Agent Turn 的后台进程或线程 |
+| `Job Queue` | 任务队列 | 存放待执行任务，让多个 Worker 可以按顺序领取 |
+
 正确做法是：
 
 ```text
 Agent 执行到人工节点
-  -> 保存 checkpoint
-  -> 创建 review_task
-  -> task.status = waiting_reviewer
-  -> 本轮 Runner 退出
-  -> 审核员提交 decision
-  -> 投递 resume job
+  -> 保存 checkpoint（执行现场快照）
+  -> 创建 review_task（审核待办）
+  -> task.status = waiting_reviewer（任务状态改为等待审核）
+  -> 本轮 Runner 退出（当前执行循环停止）
+  -> 审核员提交 decision（审核决定）
+  -> 投递 resume job（恢复执行任务）
   -> Worker 重新加载 checkpoint 和 decision
   -> Agent 从暂停点继续执行
 ```
 
 ```mermaid
 sequenceDiagram
-  participant W as Agent Worker
-  participant DB as DB
+  participant W as Agent Worker 后台执行器
+  participant DB as DB 数据库
   participant R as 审核员页面
   participant O as 审核员
-  participant Q as Job Queue
+  participant Q as Job Queue 任务队列
 
   W->>W: 执行到需要审核
-  W->>DB: 保存 checkpoint
-  W->>DB: 创建 review_task
-  W->>DB: task.status = waiting_reviewer
+  W->>DB: 保存 checkpoint 执行现场快照
+  W->>DB: 创建 review_task 审核待办
+  W->>DB: task.status = waiting_reviewer 等待审核
   W-->>W: 退出本轮执行
 
   R->>DB: 查询待审核任务
-  DB-->>R: 返回 review_task
+  DB-->>R: 返回 review_task 审核待办
   O->>R: 提交确认/修改/升级/驳回
-  R->>DB: 写 reviewer_decision event
-  R->>Q: 投递 resume_agent_job(task_id)
+  R->>DB: 写 reviewer_decision event 审核决定事件
+  R->>Q: 投递 resume_agent_job 恢复执行任务
 
-  Q-->>W: 分配 resume job
+  Q-->>W: 分配 resume job 恢复任务
   W->>DB: 加载 task/checkpoint/decision
   W->>W: 从暂停点继续执行
   W->>DB: 写最终状态和审计
@@ -645,7 +790,134 @@ sequenceDiagram
 - 暂停不是线程阻塞。
 - 暂停是状态持久化。
 - 恢复不是接着原来的 HTTP 请求。
-- 恢复是一个新的 Worker job。
+- 恢复是一个新的后台执行任务，也就是新的 `Worker job`。
+
+可以把它类比成保存游戏进度：
+
+```text
+checkpoint = 存档
+review_task = 等别人确认的任务卡片
+decision = 别人做出的选择
+resume job = 读取存档后继续玩的任务
+```
+
+### 6.1 checkpoint 怎么实现
+
+`checkpoint` 不建议保存一大段聊天文本，也不建议保存整个进程内存。
+
+它应该保存**恢复执行所需的最小现场**：
+
+```text
+当前任务是谁
+当前执行到哪一步
+已经得到哪些关键结果
+下一步应该等什么事件
+恢复后应该从哪个动作继续
+```
+
+一个简化的 `checkpoint` 可以长这样：
+
+```json
+{
+  "task_id": "task_001",
+  "session_id": "session_001",
+  "current_step": "waiting_reviewer",
+  "resume_from": "after_review_decision",
+  "ticket_id": "ticket_123",
+  "category": "refund_complaint",
+  "risk_level": "high",
+  "suggested_action": {
+    "type": "create_assignment",
+    "target_department": "after_sales",
+    "priority": "high"
+  },
+  "required_event": "reviewer_decision",
+  "created_at": "2026-08-18T10:00:00+08:00"
+}
+```
+
+字段可以这样理解：
+
+| 字段 | 中文理解 | 为什么要存 |
+|------|----------|------------|
+| `task_id` | 当前任务 ID | 恢复时知道继续哪个任务 |
+| `session_id` | 当前会话 ID | 恢复时重新加载上下文 |
+| `current_step` | 当前步骤 | 知道任务停在哪里 |
+| `resume_from` | 从哪里恢复 | 审核结束后跳回哪个执行点 |
+| `ticket_id` | 工单 ID | 后续工具调用需要它 |
+| `category` | 已识别分类 | 不用重新让模型分类 |
+| `risk_level` | 风险等级 | 恢复后知道为什么走审核 |
+| `suggested_action` | 建议动作 | 审核员确认的就是这件事 |
+| `required_event` | 等待的事件 | 这里等的是审核决定 |
+| `created_at` | 保存时间 | 方便排查和超时处理 |
+
+实现流程可以画成这样：
+
+```mermaid
+flowchart TD
+  A[Agent 执行中] --> B{是否需要审核}
+  B -->|否| C[继续调用 Tool]
+  B -->|是| D[生成 checkpoint]
+  D --> E[写入 tasks.checkpoint]
+  E --> F[创建 review_task]
+  F --> G[task.status = waiting_reviewer]
+  G --> H[Runner 退出]
+  H --> I[审核员提交 decision]
+  I --> J[投递 resume job]
+  J --> K[Worker 加载 checkpoint]
+  K --> L[合并 decision]
+  L --> M[从 resume_from 继续执行]
+```
+
+### 6.2 checkpoint 存在哪里
+
+MVP 阶段可以直接存在 `tasks.checkpoint` 字段里：
+
+```text
+tasks
+  id
+  status
+  checkpoint
+  version
+```
+
+如果 checkpoint 变大，或者需要保存多次历史快照，可以拆成独立表：
+
+```text
+task_checkpoints
+  id
+  task_id
+  step
+  payload
+  created_at
+```
+
+第一版推荐：
+
+```text
+简单任务 -> 存 tasks.checkpoint
+复杂工作流 -> 单独 task_checkpoints 表
+```
+
+### 6.3 checkpoint 不应该存什么
+
+不要把这些东西直接塞进 checkpoint：
+
+- 完整模型内部推理过程。
+- 大段无关聊天历史。
+- 未脱敏的敏感数据。
+- 临时连接对象、HTTP 请求对象、数据库连接。
+- 可以通过 `task_id` 重新查到的重复数据。
+
+更好的做法是：
+
+```text
+event 保存过程
+checkpoint 保存恢复点
+audit_log 保存可追溯结论
+```
+
+三者不要混在一起。
 
 ---
 
