@@ -359,6 +359,169 @@ stateDiagram-v2
 - 每一步都可追溯
 - 很容易做失败重试和状态恢复
 
+### 4.4 多用户并发怎么隔离
+
+一个 Agent 不是只能服务一个用户。
+
+更准确的理解是：
+
+```text
+Agent 代码可以共享
+Agent Runtime 可以并发执行
+但每个用户的 session、task、context、event 必须隔离
+```
+
+也就是说，系统里不是为每个用户启动一个完全独立的 Agent 程序，而是让同一套 Agent 能力处理很多条独立任务。
+
+```text
+用户 A -> session_A -> task_A -> context_A -> events_A
+用户 B -> session_B -> task_B -> context_B -> events_B
+用户 C -> session_C -> task_C -> context_C -> events_C
+```
+
+#### 隔离边界
+
+| 隔离对象 | 为什么要隔离 |
+|----------|--------------|
+| `user_id` | 知道这个请求属于谁 |
+| `tenant_id` | 多租户或多业务线不能串数据 |
+| `session_id` | 一次对话或一次业务处理的上下文边界 |
+| `task_id` | 一条具体业务任务的状态边界 |
+| `review_task_id` | 一条人工审核待办的操作边界 |
+| `event_id` | 每一步输入、输出、决策都要能追踪 |
+| `permission_scope` | 工具调用只能访问当前用户或当前业务允许的数据 |
+
+#### 技术实现方式
+
+每次请求都必须带上身份和会话信息：
+
+```text
+POST /api/sessions
+Authorization: Bearer <token>
+
+{
+  "tenant_id": "mall_a",
+  "user_id": "user_001",
+  "message": "我这单退款三天了还没到账"
+}
+```
+
+后端创建隔离的会话和任务：
+
+```text
+session:
+  id = session_001
+  tenant_id = mall_a
+  user_id = user_001
+
+task:
+  id = task_001
+  session_id = session_001
+  status = analyzing
+
+event:
+  task_id = task_001
+  type = user_message
+  payload = 用户输入
+```
+
+之后 Agent 每次继续执行，都不能只靠内存变量，而要按 `task_id` 重新加载：
+
+```text
+load task by task_id
+load session by session_id
+check user_id / tenant_id / permission_scope
+load context for this session only
+run next step
+append event
+save new status
+```
+
+#### 为什么不能只用全局变量
+
+不要这样做：
+
+```text
+current_user = 用户 A
+current_context = 用户 A 的上下文
+
+另一个请求进来
+current_user = 用户 B
+current_context = 用户 B 的上下文
+```
+
+这种写法在并发下很容易串上下文：
+
+- 用户 A 看到用户 B 的结果
+- 审核员处理错任务
+- Agent 调工具时拿错业务数据
+- 审计日志无法追溯
+
+#### 推荐的数据访问规则
+
+任何查询都要带隔离条件：
+
+```sql
+select * from tasks
+where id = :task_id
+  and tenant_id = :tenant_id;
+```
+
+任何审核操作都要检查任务归属：
+
+```text
+review_task.task_id -> task.session_id -> session.tenant_id
+```
+
+任何工具调用都要带最小必要上下文：
+
+```text
+tool_input = {
+  "tenant_id": "mall_a",
+  "ticket_id": "ticket_123",
+  "allowed_actions": ["read_ticket", "create_assignment"]
+}
+```
+
+#### 并发执行时怎么避免重复处理
+
+多用户并发时，还要防止同一个任务被执行两次：
+
+```text
+worker_1 取到 task_001
+worker_2 也取到 task_001
+两个 worker 同时创建分派记录
+```
+
+常见做法：
+
+- `task.version` 乐观锁
+- `review_task.status` 从 `pending` 原子更新为 `processing`
+- 工具调用加 `idempotency_key`
+- 写入业务系统前检查是否已经有 `assignment_id`
+
+例如：
+
+```sql
+update review_tasks
+set status = 'processing', version = version + 1
+where id = :review_task_id
+  and status = 'pending'
+  and version = :old_version;
+```
+
+如果更新行数是 0，说明这个审核任务已经被别人处理了。
+
+#### 一句话总结
+
+```text
+Agent 能力是共享的
+用户上下文是隔离的
+任务状态是持久化的
+执行过程是可恢复的
+工具调用是带权限边界的
+```
+
 ---
 
 ## 5. 工具怎么设计
