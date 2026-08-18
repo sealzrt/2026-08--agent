@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>业务 Agent 用户确认页</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --text: #1f2937;
+      --muted: #64748b;
+      --line: #d7dee8;
+      --blue: #2563eb;
+      --blue-2: #dbeafe;
+      --green: #16a34a;
+      --green-2: #dcfce7;
+      --amber: #d97706;
+      --amber-2: #fef3c7;
+      --cyan: #0891b2;
+      --cyan-2: #cffafe;
+      --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, #f5f7fb 100%);
+      color: var(--text);
+    }
+    .page { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px;
+    }
+    .title h1 { margin: 0; font-size: 24px; }
+    .title p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow); font-size: 13px; color: var(--muted);
+      white-space: nowrap;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--blue); box-shadow: 0 0 0 5px rgba(37,99,235,.12); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr); gap: 18px; align-items: start; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+    .panel-hd {
+      padding: 16px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px;
+      background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+    }
+    .panel-hd h2 { margin: 0; font-size: 16px; }
+    .panel-hd small { color: var(--muted); font-size: 12px; }
+    .panel-body { padding: 18px; }
+    .chat { display: grid; gap: 14px; }
+    .composer { display: grid; gap: 10px; margin-bottom: 16px; }
+    .composer textarea {
+      width: 100%; min-height: 108px; resize: vertical; border: 1px solid var(--line); border-radius: 14px;
+      padding: 12px 14px; font: inherit; color: var(--text); background: #fbfdff; line-height: 1.55;
+    }
+    .composer textarea:focus { outline: 2px solid rgba(37, 99, 235, 0.18); border-color: var(--blue); }
+    .composer-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .bubble {
+      border-radius: 18px; padding: 14px 16px; border: 1px solid var(--line); background: var(--panel-2); line-height: 1.55;
+    }
+    .bubble.user { background: #eff6ff; border-color: #bfdbfe; }
+    .bubble.agent { background: #f5f3ff; border-color: #ddd6fe; }
+    .label { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .mini-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--blue); }
+    .confirm-card {
+      margin-top: 16px; border-radius: 18px; border: 1px solid #f5c16c; background: linear-gradient(180deg, #fff9ec 0%, #fffdf8 100%); overflow: hidden;
+    }
+    .confirm-card .hd {
+      padding: 14px 16px; border-bottom: 1px solid rgba(217, 119, 6, 0.18); display: flex; justify-content: space-between; gap: 12px; align-items: center;
+    }
+    .confirm-card .hd strong { font-size: 14px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .amber { background: var(--amber-2); color: var(--amber); }
+    .green { background: var(--green-2); color: var(--green); }
+    .cyan { background: var(--cyan-2); color: var(--cyan); }
+    .body-grid { padding: 16px; display: grid; gap: 12px; }
+    .field {
+      display: grid; gap: 4px; padding: 12px; border-radius: 14px; border: 1px solid #e2e8f0; background: #fbfdff;
+    }
+    .field span { color: var(--muted); font-size: 12px; }
+    .field strong { font-size: 14px; line-height: 1.4; }
+    .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .btn {
+      border: 1px solid var(--line); background: #fff; color: var(--text); border-radius: 12px; padding: 11px 10px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn.success { background: #16a34a; color: #fff; border-color: #16a34a; }
+    .btn.warn { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+    .timeline { margin-top: 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .step {
+      padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: #fff; min-height: 84px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .step.active { border-color: #93c5fd; background: #eff6ff; }
+    .step.done { border-color: #bbf7d0; background: #ecfdf5; }
+    .step .num {
+      width: 26px; height: 26px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+      background: #eef2ff; color: #4338ca; font-size: 12px; font-weight: 700;
+    }
+    .step .txt { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .preview {
+      display: grid; gap: 10px;
+    }
+    .preview-card {
+      border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+      padding: 14px 16px;
+    }
+    .preview-card strong { display: block; font-size: 14px; margin-bottom: 6px; }
+    .preview-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .result {
+      border: 1px solid #bbf7d0; background: #ecfdf5; color: #166534; border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 1.45;
+    }
+    .status-card {
+      margin-top: 16px; border-radius: 18px; border: 1px solid #a5f3fc; background: linear-gradient(180deg, #ecfeff 0%, #f8fdff 100%);
+      overflow: hidden;
+    }
+    .status-card .hd {
+      padding: 14px 16px; border-bottom: 1px solid rgba(8, 145, 178, 0.18); display: flex; justify-content: space-between; gap: 12px; align-items: center;
+    }
+    .status-card .hd strong { font-size: 14px; }
+    .hidden { display: none; }
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .actions, .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .page { padding: 16px; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .actions, .timeline { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="title">
+        <h1>业务 Agent 用户确认页</h1>
+        <p>只给最终用户看的页面：输入问题、查看建议、确认提交、查看进度和结果。</p>
+      </div>
+      <div class="pill"><span class="dot"></span> 用户视图</div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-hd">
+          <div>
+            <h2>对话与确认</h2>
+            <small>只显示用户需要知道的信息</small>
+          </div>
+          <span id="pageStatus" class="badge amber">等待输入</span>
+        </div>
+        <div class="panel-body">
+          <div class="composer">
+            <textarea id="questionInput" placeholder="请输入你的问题，例如：我这单退款三天了还没到账，能帮我处理一下吗？"></textarea>
+            <div class="composer-actions">
+              <button id="sampleBtn" class="btn">填入示例</button>
+              <button id="runBtn" class="btn primary">让 Agent 分析</button>
+            </div>
+          </div>
+
+          <div id="chat" class="chat">
+            <div class="bubble agent">
+              <div class="label"><span class="mini-dot"></span>系统</div>
+              请先输入问题，然后点击“让 Agent 分析”。
+            </div>
+          </div>
+
+          <div id="confirmCard" class="confirm-card hidden">
+            <div class="hd">
+              <strong>请确认这项操作</strong>
+              <span id="confirmBadge" class="badge amber">需要你的确认</span>
+            </div>
+            <div class="body-grid">
+              <div class="field">
+                <span>即将执行</span>
+                <strong>提交客服处理请求</strong>
+              </div>
+              <div class="field">
+                <span>处理方式</span>
+                <strong>由客服继续跟进</strong>
+              </div>
+              <div class="field">
+                <span>说明</span>
+                <strong>提交后，客服会查看退款进度并继续处理。审核和处理需要一点时间，页面会显示最新状态。</strong>
+              </div>
+              <div class="actions">
+                <button id="submitBtn" class="btn success">确认提交</button>
+                <button id="editBtn" class="btn primary">补充信息</button>
+                <button id="cancelBtn" class="btn">取消</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline">
+            <div id="stepInput" class="step active"><div class="num">1</div><div class="txt">你输入问题</div></div>
+            <div id="stepAnalyze" class="step"><div class="num">2</div><div class="txt">系统整理请求</div></div>
+            <div id="stepConfirm" class="step"><div class="num">3</div><div class="txt">你确认提交</div></div>
+            <div id="stepProgress" class="step"><div class="num">4</div><div class="txt">客服继续处理</div></div>
+          </div>
+
+          <div id="statusCard" class="status-card hidden">
+            <div class="hd">
+              <strong>提交后看到的反馈</strong>
+              <span id="ticketBadge" class="badge cyan">处理中</span>
+            </div>
+            <div class="body-grid">
+              <div class="field">
+                <span>服务单号</span>
+                <strong id="ticketId">-</strong>
+              </div>
+              <div class="field">
+                <span>当前状态</span>
+                <strong id="ticketStatus">-</strong>
+              </div>
+              <div class="field">
+                <span>下一步</span>
+                <strong id="ticketNext">-</strong>
+              </div>
+              <div class="actions">
+                <button id="refreshStatusBtn" class="btn primary">刷新状态</button>
+                <button id="newRequestBtn" class="btn">提交新问题</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="preview">
+        <div class="panel">
+          <div class="panel-hd">
+            <div>
+              <h2>页面里用户能看到什么</h2>
+              <small>保持简单，避免内部信息过多</small>
+            </div>
+            <span class="badge green">简洁</span>
+          </div>
+          <div class="panel-body">
+            <div class="preview-card">
+              <strong>输入内容</strong>
+              <p>只保留用户提交的问题或工单文本。</p>
+            </div>
+            <div class="preview-card">
+              <strong>系统建议</strong>
+              <p>显示接下来会发生什么，以及审核或处理可能需要时间。</p>
+            </div>
+            <div class="preview-card">
+              <strong>确认按钮</strong>
+              <p>确认提交、补充信息、取消。不要暴露内部审核动作。</p>
+            </div>
+            <div class="preview-card">
+              <strong>进度反馈</strong>
+              <p>提交后生成服务单号，用户可以在当前页面、我的工单或消息通知里看到处理进度。</p>
+            </div>
+            <div class="result">
+              用户看到的重点不是内部规则，而是：<strong>我提交了什么、现在处理到哪一步、什么时候能看到结果</strong>。
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <script>
+    const input = document.querySelector("#questionInput");
+    const sampleBtn = document.querySelector("#sampleBtn");
+    const runBtn = document.querySelector("#runBtn");
+    const submitBtn = document.querySelector("#submitBtn");
+    const editBtn = document.querySelector("#editBtn");
+    const cancelBtn = document.querySelector("#cancelBtn");
+    const refreshStatusBtn = document.querySelector("#refreshStatusBtn");
+    const newRequestBtn = document.querySelector("#newRequestBtn");
+    const chat = document.querySelector("#chat");
+    const confirmCard = document.querySelector("#confirmCard");
+    const statusCard = document.querySelector("#statusCard");
+    const pageStatus = document.querySelector("#pageStatus");
+    const ticketBadge = document.querySelector("#ticketBadge");
+    const ticketId = document.querySelector("#ticketId");
+    const ticketStatus = document.querySelector("#ticketStatus");
+    const ticketNext = document.querySelector("#ticketNext");
+    const steps = {
+      input: document.querySelector("#stepInput"),
+      analyze: document.querySelector("#stepAnalyze"),
+      confirm: document.querySelector("#stepConfirm"),
+      progress: document.querySelector("#stepProgress")
+    };
+    let currentTicketId = "";
+    let refreshCount = 0;
+
+    function setBadge(el, text, colorClass) {
+      el.textContent = text;
+      el.className = `badge ${colorClass}`;
+    }
+
+    function setStep(name) {
+      const order = ["input", "analyze", "confirm", "progress"];
+      const activeIndex = order.indexOf(name);
+      order.forEach((item, index) => {
+        steps[item].classList.toggle("active", index === activeIndex);
+        steps[item].classList.toggle("done", index < activeIndex);
+      });
+    }
+
+    function addBubble(type, label, text) {
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${type}`;
+
+      const labelNode = document.createElement("div");
+      labelNode.className = "label";
+      labelNode.innerHTML = '<span class="mini-dot"></span>';
+      labelNode.append(label);
+
+      const textNode = document.createElement("div");
+      textNode.textContent = text;
+
+      bubble.append(labelNode, textNode);
+      chat.append(bubble);
+    }
+
+    function resetFlow() {
+      chat.innerHTML = "";
+      addBubble("agent", "系统", "请先输入问题，然后点击“让 Agent 分析”。");
+      confirmCard.classList.add("hidden");
+      statusCard.classList.add("hidden");
+      currentTicketId = "";
+      refreshCount = 0;
+      setBadge(pageStatus, "等待输入", "amber");
+      setStep("input");
+      runBtn.disabled = false;
+      input.disabled = false;
+      sampleBtn.disabled = false;
+      refreshStatusBtn.disabled = false;
+      submitBtn.disabled = false;
+      editBtn.disabled = false;
+      cancelBtn.disabled = false;
+    }
+
+    sampleBtn.addEventListener("click", () => {
+      input.value = "我这单退款三天了还没到账，能帮我处理一下吗？";
+      input.focus();
+    });
+
+    runBtn.addEventListener("click", () => {
+      const question = input.value.trim();
+      if (!question) {
+        input.focus();
+        setBadge(pageStatus, "请先输入", "amber");
+        return;
+      }
+
+      chat.innerHTML = "";
+      addBubble("user", "用户输入", question);
+      addBubble("agent", "Agent", "正在整理你的问题，并判断是否需要继续提交给客服。");
+      confirmCard.classList.add("hidden");
+      statusCard.classList.add("hidden");
+      setBadge(pageStatus, "分析中", "cyan");
+      setStep("analyze");
+      runBtn.disabled = true;
+      input.disabled = true;
+      sampleBtn.disabled = true;
+      submitBtn.disabled = false;
+      editBtn.disabled = false;
+      cancelBtn.disabled = false;
+
+      window.setTimeout(() => {
+        addBubble("agent", "系统建议", "我可以帮你提交给客服继续处理。提交后，客服会根据你的问题跟进退款进度，你可以在这个页面查看处理状态。");
+        confirmCard.classList.remove("hidden");
+        setBadge(pageStatus, "等待确认", "amber");
+        setStep("confirm");
+        input.disabled = false;
+        sampleBtn.disabled = false;
+        submitBtn.focus();
+      }, 700);
+    });
+
+    submitBtn.addEventListener("click", () => {
+      currentTicketId = `T${Date.now().toString().slice(-8)}`;
+      ticketId.textContent = currentTicketId;
+      ticketStatus.textContent = "已提交，正在等待客服处理";
+      ticketNext.textContent = "客服处理完成后，这里会更新结果；也可以通过消息通知提醒你回来查看。";
+      setBadge(ticketBadge, "处理中", "cyan");
+      setBadge(pageStatus, "已提交", "green");
+      setStep("progress");
+      confirmCard.classList.add("hidden");
+      statusCard.classList.remove("hidden");
+      input.disabled = true;
+      sampleBtn.disabled = true;
+      runBtn.disabled = true;
+      submitBtn.disabled = true;
+      editBtn.disabled = true;
+      addBubble("agent", "提交结果", `已为你生成服务单 ${currentTicketId}，当前状态是“处理中”。`);
+    });
+
+    editBtn.addEventListener("click", () => {
+      input.disabled = false;
+      sampleBtn.disabled = false;
+      runBtn.disabled = false;
+      confirmCard.classList.add("hidden");
+      setBadge(pageStatus, "补充信息", "amber");
+      setStep("input");
+      input.focus();
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      input.value = "";
+      resetFlow();
+    });
+
+    refreshStatusBtn.addEventListener("click", () => {
+      if (!currentTicketId) return;
+      refreshCount += 1;
+      if (refreshCount === 1) {
+        ticketStatus.textContent = "客服已受理，正在核对退款进度";
+        ticketNext.textContent = "如果需要补充凭证，客服会在服务单里留言。";
+        addBubble("agent", "进度更新", "客服已受理这条服务单，正在核对退款进度。");
+        return;
+      }
+      ticketStatus.textContent = "已反馈处理结果";
+      ticketNext.textContent = "退款进度已更新，请查看服务单详情。";
+      setBadge(ticketBadge, "已反馈", "green");
+      setBadge(pageStatus, "已反馈", "green");
+      refreshStatusBtn.disabled = true;
+      addBubble("agent", "处理结果", "客服已反馈处理结果，你可以在服务单详情里继续查看。");
+    });
+
+    newRequestBtn.addEventListener("click", () => {
+      input.value = "";
+      resetFlow();
+      input.focus();
+    });
+  </script>
+</body>
+</html>

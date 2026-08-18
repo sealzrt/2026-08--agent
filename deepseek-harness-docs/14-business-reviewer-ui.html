@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>业务 Agent 审核员页</title>
+  <style>
+    :root {
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --text: #1f2937;
+      --muted: #64748b;
+      --line: #d7dee8;
+      --blue: #2563eb;
+      --blue-2: #dbeafe;
+      --green: #16a34a;
+      --green-2: #dcfce7;
+      --amber: #d97706;
+      --amber-2: #fef3c7;
+      --red: #dc2626;
+      --red-2: #fee2e2;
+      --purple: #7c3aed;
+      --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, #f4f7fb 100%);
+      color: var(--text);
+    }
+    .page { max-width: 1320px; margin: 0 auto; padding: 24px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .title h1 { margin: 0; font-size: 24px; }
+    .title p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow); font-size: 13px; color: var(--muted);
+      white-space: nowrap;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--amber); box-shadow: 0 0 0 5px rgba(217,119,6,.12); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(340px, .85fr); gap: 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+    .panel-hd { padding: 16px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: center; background: linear-gradient(180deg, #fff 0%, #f8fafc 100%); }
+    .panel-hd h2 { margin: 0; font-size: 16px; }
+    .panel-hd small { color: var(--muted); font-size: 12px; }
+    .panel-body { padding: 18px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .amber { background: var(--amber-2); color: var(--amber); }
+    .blue { background: var(--blue-2); color: #1d4ed8; }
+    .green { background: var(--green-2); color: var(--green); }
+    .red { background: var(--red-2); color: var(--red); }
+    .stack { display: grid; gap: 12px; }
+    .card {
+      border-radius: 16px; border: 1px solid var(--line); background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+      padding: 14px 16px;
+    }
+    .card strong { display: block; margin-bottom: 6px; font-size: 14px; }
+    .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .chat { display: grid; gap: 14px; }
+    .bubble { border-radius: 18px; padding: 14px 16px; border: 1px solid var(--line); background: var(--panel-2); line-height: 1.55; }
+    .bubble.user { background: #eff6ff; border-color: #bfdbfe; }
+    .bubble.agent { background: #f5f3ff; border-color: #ddd6fe; }
+    .bubble.llm { background: #ecfeff; border-color: #a5f3fc; }
+    .label { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .mini-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--blue); }
+    .detail-grid { display: grid; gap: 10px; }
+    .field {
+      display: grid; gap: 4px; padding: 12px; border-radius: 14px; border: 1px solid #e2e8f0; background: #fbfdff;
+    }
+    .field span { color: var(--muted); font-size: 12px; }
+    .field strong { font-size: 14px; line-height: 1.4; }
+    .timeline { display: grid; gap: 10px; }
+    .log {
+      display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: start; padding: 12px; border-radius: 14px;
+      border: 1px solid var(--line); background: #fff;
+    }
+    .num {
+      width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+      background: #eef2ff; color: #4338ca; font-size: 12px; font-weight: 700;
+    }
+    .log .k { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .log .v { font-size: 13px; line-height: 1.45; }
+    .actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .btn {
+      border: 1px solid var(--line); background: #fff; color: var(--text); border-radius: 12px; padding: 11px 10px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .btn.primary { background: #2563eb; color: white; border-color: #2563eb; }
+    .btn.success { background: #16a34a; color: white; border-color: #16a34a; }
+    .btn.warn { background: #f59e0b; color: white; border-color: #f59e0b; }
+    .review-note {
+      width: 100%; min-height: 82px; resize: vertical; border: 1px solid var(--line); border-radius: 14px;
+      padding: 12px 14px; font: inherit; color: var(--text); background: #fbfdff; line-height: 1.5;
+    }
+    .review-note:focus { outline: 2px solid rgba(37, 99, 235, 0.18); border-color: var(--blue); }
+    .edit-panel {
+      display: grid; gap: 10px; padding: 12px; border: 1px solid #bfdbfe; border-radius: 16px; background: #eff6ff;
+    }
+    .edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .edit-field { display: grid; gap: 6px; }
+    .edit-field label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .edit-field select,
+    .edit-field input {
+      width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font: inherit; color: var(--text);
+      background: #fff;
+    }
+    .edit-field.full { grid-column: 1 / -1; }
+    .result {
+      border: 1px solid #bbf7d0; background: #ecfdf5; color: #166534; border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 1.45;
+    }
+    .summary {
+      display: grid; gap: 12px;
+      margin-top: 16px;
+    }
+    .summary .note {
+      border-radius: 16px; padding: 12px 14px; background: #f8fafc; border: 1px solid var(--line); font-size: 13px; line-height: 1.5;
+    }
+    .audit-box {
+      border-radius: 16px; padding: 14px 16px; background: #fefefe; border: 1px solid #dbe4f0;
+      display: grid; gap: 12px;
+    }
+    .audit-line { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 10px; border-bottom: 1px dashed #dbe4f0; font-size: 13px; }
+    .audit-line:last-child { border-bottom: 0; padding-bottom: 0; }
+    .audit-line span { color: var(--muted); }
+    .hidden { display: none; }
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .page { padding: 16px; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .actions { grid-template-columns: 1fr; }
+      .edit-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="title">
+        <h1>业务 Agent 审核员页</h1>
+        <p>给业务人员、审核员或运营同学看的页面：看内部判断、确认理由、审计链路和最终动作。</p>
+      </div>
+      <div class="pill"><span class="dot"></span> 内部视图</div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-hd">
+          <div>
+            <h2>任务详情</h2>
+            <small>展示分类、风险、建议和确认结果</small>
+          </div>
+          <span id="taskStatus" class="badge amber">待确认</span>
+        </div>
+        <div class="panel-body">
+          <div class="chat">
+            <div class="bubble user">
+              <div class="label"><span class="mini-dot"></span>用户输入</div>
+              我这单退款三天了还没到账，能帮我处理一下吗？
+            </div>
+            <div class="bubble agent">
+              <div class="label"><span class="mini-dot"></span>Agent</div>
+              已整理上下文，建议交给售后支持部处理。当前属于高风险工单，需要人工确认后再写入正式系统。
+            </div>
+            <div class="bubble llm">
+              <div class="label"><span class="mini-dot"></span>LLM</div>
+              分类：退款投诉。风险等级：高。建议部门：售后支持部。理由：命中退款、投诉、高紧急关键词。
+            </div>
+          </div>
+
+          <div class="summary">
+            <div class="card">
+              <strong>确认区</strong>
+              <p id="confirmHelp">确认的是“创建工单分派记录”这条动作，不是一个泛泛的继续/停止。</p>
+            </div>
+            <textarea id="reviewNote" class="review-note" placeholder="可填写审核备注，例如：用户已等待 3 天，建议优先处理退款进度。"></textarea>
+            <div id="editPanel" class="edit-panel hidden">
+              <div class="card">
+                <strong>修改分派信息</strong>
+                <p>这里修改的是即将写入工单系统的字段，不会修改用户原始问题。</p>
+              </div>
+              <div class="edit-grid">
+                <div class="edit-field">
+                  <label for="departmentSelect">处理部门</label>
+                  <select id="departmentSelect">
+                    <option>售后支持部</option>
+                    <option>退款专员组</option>
+                    <option>主管升级队列</option>
+                  </select>
+                </div>
+                <div class="edit-field">
+                  <label for="prioritySelect">处理优先级</label>
+                  <select id="prioritySelect">
+                    <option>普通</option>
+                    <option selected>优先处理</option>
+                    <option>紧急处理</option>
+                  </select>
+                </div>
+                <div class="edit-field full">
+                  <label for="agentRemarkInput">写入客服系统的处理备注</label>
+                  <input id="agentRemarkInput" value="用户已等待 3 天，建议优先核对退款进度。">
+                </div>
+              </div>
+              <button id="executeModifiedBtn" class="btn primary">按修改内容执行</button>
+              <button id="cancelModifyBtn" class="btn">取消修改</button>
+            </div>
+            <div class="actions">
+              <button id="approveBtn" class="btn success">确认执行</button>
+              <button id="modifyBtn" class="btn primary">修改分派信息</button>
+              <button id="escalateBtn" class="btn warn">升级处理</button>
+              <button id="rejectBtn" class="btn">驳回建议</button>
+            </div>
+            <div id="reviewResult" class="result hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="stack">
+        <div class="panel">
+          <div class="panel-hd">
+            <div>
+              <h2>结构化信息</h2>
+              <small>内部人员需要看到的字段</small>
+            </div>
+            <span class="badge blue">Decision</span>
+          </div>
+          <div class="panel-body detail-grid">
+            <div class="field"><span>工单编号</span><strong>T20260817001</strong></div>
+            <div class="field"><span>分类</span><strong>退款投诉</strong></div>
+            <div class="field"><span>置信度</span><strong>0.72</strong></div>
+            <div class="field"><span>风险等级</span><strong>高</strong></div>
+            <div class="field"><span>建议部门</span><strong id="targetDepartment">售后支持部</strong></div>
+            <div class="field"><span>命中规则</span><strong>退款 + 投诉 + 高紧急</strong></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <div>
+              <h2>审计链路</h2>
+              <small>记录 Agent、LLM、确认和写入动作</small>
+            </div>
+            <span class="badge red">Audit</span>
+          </div>
+          <div id="auditTimeline" class="panel-body timeline">
+            <div class="log"><div class="num">1</div><div><div class="k">分析</div><div class="v">Agent 读取工单并组织上下文，准备调用 LLM。</div></div></div>
+            <div class="log"><div class="num">2</div><div><div class="k">判断</div><div class="v">LLM 返回分类、风险和建议部门，判定为高风险。</div></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <div>
+              <h2>结果预期</h2>
+              <small>按钮操作之后应该发生什么</small>
+            </div>
+            <span class="badge green">Expected</span>
+          </div>
+          <div class="panel-body detail-grid">
+            <div class="field"><span>确认执行</span><strong>创建正式分派记录并返回结果</strong></div>
+            <div class="field"><span>修改分派信息</span><strong>先修改处理部门、优先级或客服备注，再写入工单系统</strong></div>
+            <div class="field"><span>升级处理</span><strong>转给资深客服或主管继续判断，不执行 Agent 建议</strong></div>
+            <div class="field"><span>驳回建议</span><strong>停止当前 Agent 建议并保留审计</strong></div>
+            <div class="field"><span>用户侧反馈</span><strong id="userFeedback">等待审核员处理后同步更新服务单状态</strong></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <script>
+    const taskStatus = document.querySelector("#taskStatus");
+    const confirmHelp = document.querySelector("#confirmHelp");
+    const reviewNote = document.querySelector("#reviewNote");
+    const reviewResult = document.querySelector("#reviewResult");
+    const auditTimeline = document.querySelector("#auditTimeline");
+    const targetDepartment = document.querySelector("#targetDepartment");
+    const userFeedback = document.querySelector("#userFeedback");
+    const editPanel = document.querySelector("#editPanel");
+    const departmentSelect = document.querySelector("#departmentSelect");
+    const prioritySelect = document.querySelector("#prioritySelect");
+    const agentRemarkInput = document.querySelector("#agentRemarkInput");
+    const actionButtons = [
+      document.querySelector("#approveBtn"),
+      document.querySelector("#modifyBtn"),
+      document.querySelector("#escalateBtn"),
+      document.querySelector("#rejectBtn"),
+      document.querySelector("#executeModifiedBtn"),
+      document.querySelector("#cancelModifyBtn")
+    ];
+    const mainActionButtons = [
+      document.querySelector("#approveBtn"),
+      document.querySelector("#modifyBtn"),
+      document.querySelector("#escalateBtn"),
+      document.querySelector("#rejectBtn")
+    ];
+
+    function setBadge(el, text, colorClass) {
+      el.textContent = text;
+      el.className = `badge ${colorClass}`;
+    }
+
+    function appendAudit(title, text) {
+      const count = auditTimeline.querySelectorAll(".log").length + 1;
+      const item = document.createElement("div");
+      item.className = "log";
+      item.innerHTML = `
+        <div class="num">${count}</div>
+        <div>
+          <div class="k"></div>
+          <div class="v"></div>
+        </div>
+      `;
+      item.querySelector(".k").textContent = title;
+      item.querySelector(".v").textContent = text;
+      auditTimeline.append(item);
+    }
+
+    function finishReview(statusText, colorClass, resultText, feedbackText) {
+      setBadge(taskStatus, statusText, colorClass);
+      reviewResult.textContent = resultText;
+      reviewResult.classList.remove("hidden");
+      userFeedback.textContent = feedbackText;
+      actionButtons.forEach((btn) => {
+        btn.disabled = true;
+      });
+      reviewNote.disabled = true;
+      departmentSelect.disabled = true;
+      prioritySelect.disabled = true;
+      agentRemarkInput.disabled = true;
+    }
+
+    function setModifyMode(enabled) {
+      editPanel.classList.toggle("hidden", !enabled);
+      mainActionButtons.forEach((btn) => {
+        btn.disabled = enabled;
+      });
+      document.querySelector("#modifyBtn").disabled = enabled;
+    }
+
+    document.querySelector("#approveBtn").addEventListener("click", () => {
+      const note = reviewNote.value.trim() || "审核通过，允许按 Agent 建议创建分派记录。";
+      appendAudit("审核", note);
+      appendAudit("写入", "create_ticket_assignment 已创建分派记录，write_audit_log 已记录审核结果。");
+      finishReview(
+        "已确认",
+        "green",
+        "已确认执行：工单将写入正式分派记录，并同步更新用户服务单状态。",
+        "服务单状态更新为：客服已受理，正在核对退款进度"
+      );
+      confirmHelp.textContent = "审核已完成，当前 Agent 建议已被人工确认。";
+    });
+
+    document.querySelector("#modifyBtn").addEventListener("click", () => {
+      setModifyMode(true);
+      setBadge(taskStatus, "正在修改", "blue");
+      confirmHelp.textContent = "请先修改即将写入工单系统的字段，然后点击“按修改内容执行”。";
+      departmentSelect.focus();
+    });
+
+    document.querySelector("#cancelModifyBtn").addEventListener("click", () => {
+      setModifyMode(false);
+      setBadge(taskStatus, "待确认", "amber");
+      confirmHelp.textContent = "确认的是“创建工单分派记录”这条动作，不是一个泛泛的继续/停止。";
+    });
+
+    document.querySelector("#executeModifiedBtn").addEventListener("click", () => {
+      const department = departmentSelect.value;
+      const priority = prioritySelect.value;
+      const remark = agentRemarkInput.value.trim() || "审核员未填写额外备注。";
+      const note = reviewNote.value.trim() || "审核员修改分派信息后执行。";
+      targetDepartment.textContent = `${department} / ${priority}`;
+      appendAudit("修改分派信息", `${note} 修改后字段：处理部门=${department}，优先级=${priority}，处理备注=${remark}`);
+      appendAudit("写入", "按审核员修改后的字段创建分派记录，并写入审计日志。");
+      finishReview(
+        "已按修改执行",
+        "blue",
+        `已按修改内容执行：处理部门=${department}，优先级=${priority}。`,
+        `服务单状态更新为：客服已受理，当前问题已标记为${priority}`
+      );
+      confirmHelp.textContent = "审核已完成，最终写入的是审核员修改后的业务信息。";
+    });
+
+    document.querySelector("#escalateBtn").addEventListener("click", () => {
+      const note = reviewNote.value.trim() || "风险较高，升级给主管继续判断。";
+      appendAudit("升级处理", note);
+      appendAudit("状态更新", "不执行当前 Agent 建议，服务单进入主管待处理队列。");
+      finishReview(
+        "已升级",
+        "amber",
+        "已升级处理：当前任务不会直接写入分派结果，等待主管继续判断。",
+        "服务单状态更新为：问题已升级，正在等待进一步处理"
+      );
+      confirmHelp.textContent = "审核已完成，当前任务已升级，不再执行原 Agent 建议。";
+    });
+
+    document.querySelector("#rejectBtn").addEventListener("click", () => {
+      const note = reviewNote.value.trim() || "Agent 建议依据不足，暂不执行自动分派。";
+      appendAudit("驳回建议", note);
+      appendAudit("留痕", "停止当前 Agent 建议，并记录驳回原因。");
+      finishReview(
+        "已驳回",
+        "red",
+        "已驳回建议：不会创建分派记录，系统只保留本次判断和审核记录。",
+        "服务单状态更新为：需要补充信息，客服会继续跟进"
+      );
+      confirmHelp.textContent = "审核已完成，当前 Agent 建议已被驳回。";
+    });
+  </script>
+</body>
+</html>

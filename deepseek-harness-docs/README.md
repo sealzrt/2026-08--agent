@@ -11,7 +11,7 @@
 |------|------|------|
 | [00-business-quickstart.md](00-business-quickstart.md) | **业务落地快速入门**：用浅显方式理解 dsh 适合什么场景、怎么做 MVP、如何学习 | 1 张 |
 | [01-business-landing-map.md](01-business-landing-map.md) | **业务落地地图**：把业务需求映射成入口、工具、插件、流程、人工确认和审计 | 1 张 |
-| [02-build-first-business-agent.md](02-build-first-business-agent.md) | **第一个业务 Agent 实战**：用客户工单分派助手练习 MVP 拆解、工具设计和验收 | 1 张 |
+| [02-build-first-business-agent.md](02-build-first-business-agent.md) | **第一个业务 Agent 实战**：用客户工单分派助手练习 MVP 拆解、工具设计和验收 | 4 张 |
 | [03-mvp-delivery-playbook.md](03-mvp-delivery-playbook.md) | **MVP 交付手册**：按 4 周节奏推进业务 Agent 试点，明确交付物、验收和风险 | 0 张 |
 | [04-business-agent-patterns.md](04-business-agent-patterns.md) | **业务 Agent 落地模式库**：用 8 种常见模式快速判断业务场景该怎么套 dsh | 2 张 |
 | [05-business-case-library.md](05-business-case-library.md) | **业务 Agent 案例库**：用 8 个业务案例练习 MVP 边界、工具清单、确认点和验收标准 | 1 张 |
@@ -22,6 +22,8 @@
 | [10-business-evaluation-testing.md](10-business-evaluation-testing.md) | **业务 Agent 测试与验收指南**：用样例集、评分表、影子运行和 Go/No-Go 判断 Agent 是否可试点 | 2 张 |
 | [11-concept-cheatsheet.md](11-concept-cheatsheet.md) | **概念速查与术语辨析**：区分 Agent、Tool、Workflow、Plugin、Profile、Context、Memory、State 等概念 | 3 张 |
 | [12-business-agent-workbook.md](12-business-agent-workbook.md) | **业务 Agent 实战练习册**：把场景拆解、流程、工具、样例、验收串成一条实操路径 | 0 张 |
+| [13-business-confirmation-ui.html](13-business-confirmation-ui.html) | **业务 Agent 用户确认页**：只展示最终用户需要看到的输入、建议、确认按钮、进度和结果 | 0 张 |
+| [14-business-reviewer-ui.html](14-business-reviewer-ui.html) | **业务 Agent 审核员页**：展示审核员需要看到的分类、风险、审计和确认链路 | 0 张 |
 | [architecture.md](architecture.md) | 项目架构全景：分层设计、目录结构、启动流程、核心模块、包依赖关系 | 4 张 |
 | [plugin-system.md](plugin-system.md) | 插件系统详解：Cordis 核心概念、生命周期、通信模式、配置系统、开发指南 | 3 张 |
 | [archive-solution.md](archive-solution.md) | **档案馆落地方案**：两条业务流程编排、6 个自定义插件设计、四阶段实施路径 | 4 张 |
@@ -132,6 +134,8 @@ open architecture.md
 open plugin-system.md
 ```
 
+如果想先直观看人工确认 UI，先看 [13-business-confirmation-ui.html](13-business-confirmation-ui.html)（用户页），再看 [14-business-reviewer-ui.html](14-business-reviewer-ui.html)（审核员页）。
+
 这些文档是源码阅读和方案设计笔记，适合建立概念模型、讨论技术路线和拆解落地计划；具体 API 名称、包版本和命令参数仍建议以实际源码为准。
 
 ## 目录结构
@@ -152,6 +156,8 @@ deepseek-harness-docs/
 ├── 10-business-evaluation-testing.md
 ├── 11-concept-cheatsheet.md
 ├── 12-business-agent-workbook.md
+├── 13-business-confirmation-ui.html
+├── 14-business-reviewer-ui.html
 ├── architecture.md
 ├── plugin-system.md
 ├── archive-solution.md
