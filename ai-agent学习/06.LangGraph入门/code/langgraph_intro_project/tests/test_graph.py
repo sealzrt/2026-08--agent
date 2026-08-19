@@ -18,7 +18,7 @@ def _run_with_approval(graph, config, state, resume=None):
     if "__interrupt__" in result:
         return graph.invoke(
             Command(resume=resume or {"approved": True, "approved_by": "集成测试"}),
-            config,
+            config | {"recursion_limit": RECURSION_LIMIT},
         )
     return result
 
@@ -53,7 +53,7 @@ def test_graph_uses_business_loop_for_short_topic() -> None:
     """短主题（len <= 8）不需要检索，直接总结，但也要生成最终报告。"""
     graph = build_graph()
     config = {"configurable": {"thread_id": "test-integration-002"}}
-    state = build_initial_state("LangGraph", MAX_ITERATIONS)
+    state = build_initial_state("短主题", MAX_ITERATIONS)
 
     resumed = _run_with_approval(graph, config, state)
     assert resumed["final_report"]

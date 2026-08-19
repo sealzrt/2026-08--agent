@@ -1,6 +1,6 @@
 # langgraph-intro-project
 
-基于 LangGraph 的"资料检索与总结 Agent"贯穿项目（教程第 14~15 章）。
+基于 LangGraph 的"资料检索与总结 Agent"贯穿项目（教程第 07 章起逐步引用，第 14~15 章收束）。
 
 ## 功能
 

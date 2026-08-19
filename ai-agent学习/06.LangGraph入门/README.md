@@ -64,7 +64,7 @@ pytest
 | `LangGraph入门教程方案.md` | 规划：写作方案、代码组织、验收标准 |
 | `LangGraph入门优化方案.md` | 规划：本目录升级方案（含与 LangGraph-笔记 的标杆对比） |
 | `code/step_by_step/` | 前 13 章单文件示例（01-13 逐章对应） |
-| `code/langgraph_intro_project/` | 完整项目（第 07 章起迁移） |
+| `code/langgraph_intro_project/` | 完整项目（第 07 章起逐步引用，第 14-15 章收束） |
 | `langgraph/` | 80 个 notebook 深度练习（进阶阅读） |
 | `requirements_full.txt` | 依赖清单 |
 
@@ -95,7 +95,7 @@ pytest                            # 运行全部测试
 | 章节 | 单文件示例 | 项目代码 | notebook 深挖 | 笔记加深阅读 |
 |---|---|---|---|---|
 | 01 LangGraph 是什么 | `step_by_step/01_basic_flow.py` | — | — | `LangGraph-笔记/01-...` 的「1.0/1.1」 |
-| 02 Python 最小基础 | `step_by_step/02_basic_function.py` | `app/state.py` | `chapter01/02_dataclass`、`03_pydantic` | `LangGraph-笔记/00-环境配置` |
+| 02 Python 最小基础 | `step_by_step/02_basic_function.py` | `app/state.py` | `chapter01/02_dataclass`、`03_pydantic` | `LangGraph-笔记/00-环境配置.md` |
 | 03 第一个图 | `step_by_step/03_first_graph.py` | `app/graph.py` | `chapter01/01_graph` | `LangGraph-笔记/01-...` 的「2」 |
 | 04 State | `step_by_step/04_state_graph.py` | `app/state.py` | `chapter01/04_reducer`、`05_addmessage`、`06_node_state`、`09_state` | `LangGraph-笔记/01-...` 的「3」 |
 | 05 Node | `step_by_step/05_node_functions.py` | `app/nodes/` | `chapter01/07_node_overwrite`、`08_node_state` | `LangGraph-笔记/02-...` 的「5」 |

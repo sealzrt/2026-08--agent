@@ -38,7 +38,7 @@ def main() -> None:
                 "comment": comment,
                 "approved_by": "本地演示",
             }),
-            config,
+            config | {"recursion_limit": RECURSION_LIMIT},
         )
 
     print("\n=== 最终报告 ===\n")

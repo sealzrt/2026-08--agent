@@ -10,6 +10,7 @@ from app.nodes.analyze import analyze_topic, build_questions
 from app.nodes.evaluate import evaluate_summary
 from app.nodes.report import generate_draft_report, generate_final_report
 from app.nodes.search import plan_search, search_documents
+import app.nodes.search as search_module
 from app.nodes.summarize import mock_summarize_documents
 from app.state import build_initial_state
 
@@ -31,6 +32,11 @@ def test_analyze_topic_structure() -> None:
     assert len(result["questions"]) == 3
 
 
+def test_analyze_topic_skips_search_for_short_topic() -> None:
+    result = analyze_topic(_state("短主题"))
+    assert result["need_search"] is False
+
+
 def test_plan_search_structure() -> None:
     state = _state()
     state["questions"] = build_questions("LangGraph")
@@ -47,6 +53,21 @@ def test_search_documents_structure() -> None:
     assert len(result["documents"]) > 0
     assert isinstance(result["documents"][0]["title"], str)
     assert result["iteration_count"] == 1
+
+
+def test_search_documents_deduplicates_documents(monkeypatch) -> None:
+    monkeypatch.setattr(
+        search_module,
+        "search_tool",
+        lambda query: [
+            {"title": "重复资料", "content": f"{query}"},
+            {"title": "重复资料", "content": f"{query}"},
+        ],
+    )
+    state = _state()
+    state["search_queries"] = ["LangGraph 入门"]
+    result = search_documents(state)
+    assert len(result["documents"]) == 1
 
 
 def test_summarize_documents_structure() -> None:
@@ -80,6 +101,17 @@ def test_evaluate_summary_fails_when_not_enough_documents() -> None:
     assert result["quality_score"] < 80
 
 
+def test_evaluate_summary_marks_risk_when_iteration_limit_hit() -> None:
+    state = _state()
+    state["documents"] = [
+        {"title": "资料1", "content": "内容"}
+    ]
+    state["summary"] = "这是一段足够长的总结，包含背景、用途和风险。"
+    state["iteration_count"] = state["max_iterations"]
+    result = evaluate_summary(state)
+    assert result["risk_note"]
+
+
 def test_report_structure() -> None:
     state = _state()
     state["summary"] = "总结内容"
@@ -97,3 +129,13 @@ def test_report_structure() -> None:
     state["feedback_comment"] = "补充风险说明"
     final2 = generate_final_report(state)
     assert "补充风险说明" in final2["final_report"]
+
+
+def test_report_includes_risk_note_when_present() -> None:
+    state = _state()
+    state["summary"] = "总结内容"
+    state["draft_report"] = generate_draft_report(state)["draft_report"]
+    state["approved"] = True
+    state["risk_note"] = "结果可能不完整"
+    final = generate_final_report(state)
+    assert "结果可能不完整" in final["final_report"]

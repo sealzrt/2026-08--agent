@@ -66,6 +66,6 @@ if __name__ == "__main__":
 
     resumed = graph.invoke(
         Command(resume={"approved": False, "comment": "补充风险说明"}),
-        config,
+        config | {"recursion_limit": 20},
     )
     print(resumed)

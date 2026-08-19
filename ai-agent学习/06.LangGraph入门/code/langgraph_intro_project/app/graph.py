@@ -19,7 +19,7 @@ from typing import Literal
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from app.config import MAX_ITERATIONS, QUALITY_THRESHOLD
+from app.config import MAX_ITERATIONS, QUALITY_THRESHOLD, RECURSION_LIMIT
 from app.nodes.analyze import analyze_topic
 from app.nodes.evaluate import evaluate_summary
 from app.nodes.human_review import human_review
@@ -89,11 +89,12 @@ if __name__ == "__main__":
 
     config = {"configurable": {"thread_id": "graph-demo"}}
     state = build_initial_state("LangGraph 入门", MAX_ITERATIONS)
-    result = GRAPH.invoke(state, config | {"recursion_limit": 50})
+    result = GRAPH.invoke(state, config | {"recursion_limit": RECURSION_LIMIT})
     # langgraph 1.x：图被 interrupt 时 invoke 不抛异常，
     # 而是返回带 __interrupt__ 键的状态，用 Command(resume=...) 恢复
     if "__interrupt__" in result:
         result = GRAPH.invoke(
-            Command(resume={"approved": True, "approved_by": "演示"}), config
+            Command(resume={"approved": True, "approved_by": "演示"}),
+            config | {"recursion_limit": RECURSION_LIMIT},
         )
     print(result["final_report"])
