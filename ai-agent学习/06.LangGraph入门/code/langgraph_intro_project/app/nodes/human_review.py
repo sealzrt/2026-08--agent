@@ -9,6 +9,7 @@
 """
 
 from langgraph.types import interrupt
+from datetime import datetime, timezone
 
 from app.state import ResearchState
 
@@ -23,4 +24,5 @@ def human_review(state: ResearchState) -> dict:
         "approved": bool(feedback.get("approved", False)),
         "approved_by": str(feedback.get("approved_by", "")),
         "feedback_comment": str(feedback.get("comment", "")),
+        "approved_at": datetime.now(timezone.utc).isoformat(),
     }

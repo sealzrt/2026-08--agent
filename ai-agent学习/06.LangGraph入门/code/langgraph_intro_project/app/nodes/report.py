@@ -16,8 +16,14 @@ def generate_draft_report(state: ResearchState) -> dict:
 
 
 def generate_final_report(state: ResearchState) -> dict:
+    parts = [state["draft_report"]]
+
+    if state["risk_note"]:
+        parts.append(f"风险提示：{state['risk_note']}")
+
     if state["approved"]:
-        return {"final_report": state["draft_report"]}
+        return {"final_report": "\n".join(parts)}
 
     comment = state["feedback_comment"] or "需要修改"
-    return {"final_report": f"{state['draft_report']}\n人工修改意见：{comment}"}
+    parts.append(f"人工修改意见：{comment}")
+    return {"final_report": "\n".join(parts)}

@@ -38,7 +38,7 @@ pytest
 
 15 章渐进式教程，教你用 LangGraph 构建有状态、有分支、有循环、有人工介入、可持久化的 Agent 工作流。
 
-- 环境：**Python 3.13 + LangGraph 1.x**
+- 环境：**Python 3.10+，推荐 3.13；LangGraph 1.x 写法为主**
 - 风格：每章"导读 → 目标 → 概念 → 代码 → 执行拆解 → 调试 → 练习 → 速查"
 - 贯穿项目：资料检索与总结 Agent
 
@@ -57,15 +57,15 @@ pytest
 
 | 资源 | 说明 |
 |---|---|
-| `01` ~ `15` 章 md | 教程正文（每章 10-15KB，12 段结构） |
+| `01` ~ `15` 章 md | 教程正文（主线章节） |
 | `学习地图.md` | **先看这个**：项目演进总览、章节依赖、每章一句话 |
 | `术语表.md` | 查概念、查报错、易混概念对照 |
 | `LangGraph入门大纲.md` | 规划：章节安排、学习目标、参考资料 |
 | `LangGraph入门教程方案.md` | 规划：写作方案、代码组织、验收标准 |
 | `LangGraph入门优化方案.md` | 规划：本目录升级方案（含与 LangGraph-笔记 的标杆对比） |
-| `code/step_by_step/` | 前 6 章单文件示例（02-13 逐章对应） |
+| `code/step_by_step/` | 前 13 章单文件示例（01-13 逐章对应） |
 | `code/langgraph_intro_project/` | 完整项目（第 07 章起迁移） |
-| `langgraph/` | 60+ notebook 深度练习（官方级，进阶阅读） |
+| `langgraph/` | 80 个 notebook 深度练习（进阶阅读） |
 | `requirements_full.txt` | 依赖清单 |
 
 ## 环境要求
@@ -77,7 +77,7 @@ python -m venv .venv
 pip install -r requirements_full.txt
 ```
 
-真实模式（第 08 章起）需要模型 API Key，配置方式见各章"代码运行方式"。
+真实模式（第 08 章起）需要模型 API Key，配置方式见各章"代码运行方式"；`langgraph/` 下 notebook 也可能调用真实模型，注意成本和输出清理。
 
 ## 快速开始
 
@@ -94,7 +94,7 @@ pytest                            # 运行全部测试
 
 | 章节 | 单文件示例 | 项目代码 | notebook 深挖 | 笔记加深阅读 |
 |---|---|---|---|---|
-| 01 LangGraph 是什么 | — | — | — | `LangGraph-笔记/01-...` 的「1.0/1.1」 |
+| 01 LangGraph 是什么 | `step_by_step/01_basic_flow.py` | — | — | `LangGraph-笔记/01-...` 的「1.0/1.1」 |
 | 02 Python 最小基础 | `step_by_step/02_basic_function.py` | `app/state.py` | `chapter01/02_dataclass`、`03_pydantic` | `LangGraph-笔记/00-环境配置` |
 | 03 第一个图 | `step_by_step/03_first_graph.py` | `app/graph.py` | `chapter01/01_graph` | `LangGraph-笔记/01-...` 的「2」 |
 | 04 State | `step_by_step/04_state_graph.py` | `app/state.py` | `chapter01/04_reducer`、`05_addmessage`、`06_node_state`、`09_state` | `LangGraph-笔记/01-...` 的「3」 |

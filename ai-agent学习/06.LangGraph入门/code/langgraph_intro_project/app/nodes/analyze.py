@@ -13,9 +13,13 @@ def build_questions(topic: str) -> list[str]:
     ]
 
 
+def should_search(topic: str) -> bool:
+    return len(topic.strip()) > 8
+
+
 def analyze_topic(state: ResearchState) -> dict:
     questions = build_questions(state["topic"])
     return {
         "questions": questions,
-        "need_search": len(state["topic"]) > 8,
+        "need_search": should_search(state["topic"]),
     }

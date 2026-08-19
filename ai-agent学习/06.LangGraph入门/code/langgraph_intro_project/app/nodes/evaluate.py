@@ -22,4 +22,9 @@ def evaluate_summary(state: ResearchState) -> dict:
     return {
         "quality_score": result["quality_score"],
         "missing_points": result["missing_points"],
+        "risk_note": (
+            "已达到最大轮次，当前结果可能不完整"
+            if result["quality_score"] < 80 and state["iteration_count"] >= state["max_iterations"]
+            else ""
+        ),
     }

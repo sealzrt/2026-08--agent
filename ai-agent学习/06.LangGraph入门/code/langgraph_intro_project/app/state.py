@@ -26,6 +26,7 @@ class ResearchState(TypedDict):
     summary: str
     quality_score: int
     missing_points: list[str]
+    risk_note: str
     # 循环控制
     iteration_count: int
     max_iterations: int
@@ -35,6 +36,7 @@ class ResearchState(TypedDict):
     approved: bool
     approved_by: str
     feedback_comment: str
+    approved_at: str
 
 
 def build_initial_state(topic: str, max_iterations: int) -> ResearchState:
@@ -49,6 +51,7 @@ def build_initial_state(topic: str, max_iterations: int) -> ResearchState:
         "summary": "",
         "quality_score": 0,
         "missing_points": [],
+        "risk_note": "",
         "iteration_count": 0,
         "max_iterations": max_iterations,
         "draft_report": "",
@@ -56,4 +59,5 @@ def build_initial_state(topic: str, max_iterations: int) -> ResearchState:
         "approved": False,
         "approved_by": "",
         "feedback_comment": "",
+        "approved_at": "",
     }

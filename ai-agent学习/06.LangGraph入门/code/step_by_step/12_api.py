@@ -10,7 +10,7 @@
 
 运行方式：
     pip install fastapi uvicorn
-    uvicorn step_by_step.12_api:app --reload
+    python 12_api.py
 """
 
 from typing import TypedDict

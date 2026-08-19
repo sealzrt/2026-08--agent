@@ -13,6 +13,18 @@ def plan_search(state: ResearchState) -> dict:
     return {"search_queries": [f"{state['topic']} {q}" for q in state["questions"]]}
 
 
+def _dedupe_documents(documents: list[SearchResult]) -> list[SearchResult]:
+    seen: set[tuple[str, str]] = set()
+    unique: list[SearchResult] = []
+    for doc in documents:
+        key = (doc["title"], doc["content"])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(doc)
+    return unique
+
+
 def search_documents(state: ResearchState) -> dict:
     documents: list[SearchResult] = []
     errors: list[str] = []
@@ -25,7 +37,7 @@ def search_documents(state: ResearchState) -> dict:
             errors.append(f"检索失败：{query}，原因：{exc}")
 
     return {
-        "documents": state["documents"] + documents,
+        "documents": _dedupe_documents(state["documents"] + documents),
         "errors": state["errors"] + errors,
         "iteration_count": state["iteration_count"] + 1,
     }

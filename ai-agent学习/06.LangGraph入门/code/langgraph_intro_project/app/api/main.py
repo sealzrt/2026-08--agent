@@ -37,6 +37,7 @@ class TaskRecord(TypedDict):
     topic: str
     result: dict | None
     error: str | None
+    interrupt: dict[str, Any] | None
 
 
 app = FastAPI(title="LangGraph 资料检索与总结 Agent")
@@ -56,6 +57,12 @@ def _thread_config(thread_id: str) -> dict:
     }
 
 
+def _get_task_snapshot(task_id: str) -> TaskRecord | None:
+    with _LOCK:
+        task = _TASKS.get(task_id)
+        return dict(task) if task is not None else None
+
+
 @app.post("/tasks", response_model=TaskResponse)
 def create_task(request: CreateTaskRequest) -> TaskResponse:
     task_id = _new_task_id()
@@ -66,6 +73,7 @@ def create_task(request: CreateTaskRequest) -> TaskResponse:
             topic=request.topic,
             result=None,
             error=None,
+            interrupt=None,
         )
 
     config = _thread_config(task_id)
@@ -75,12 +83,18 @@ def create_task(request: CreateTaskRequest) -> TaskResponse:
         result = GRAPH.invoke(state, config)
         if "__interrupt__" in result:
             # 图在 human_review 处中断，等待前端提交反馈
+            interrupt = result["__interrupt__"][0]
             with _LOCK:
                 _TASKS[task_id]["status"] = "interrupted"
+                _TASKS[task_id]["interrupt"] = {
+                    "id": getattr(interrupt, "id", ""),
+                    "value": getattr(interrupt, "value", {}),
+                }
         else:
             with _LOCK:
                 _TASKS[task_id]["status"] = "completed"
                 _TASKS[task_id]["result"] = result
+                _TASKS[task_id]["interrupt"] = None
     except Exception as exc:
         with _LOCK:
             _TASKS[task_id]["status"] = "failed"
@@ -91,7 +105,7 @@ def create_task(request: CreateTaskRequest) -> TaskResponse:
 
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
 def get_task(task_id: str) -> TaskResponse:
-    task = _TASKS.get(task_id)
+    task = _get_task_snapshot(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="任务不存在")
     return _to_response(task_id)
@@ -99,7 +113,7 @@ def get_task(task_id: str) -> TaskResponse:
 
 @app.post("/tasks/{task_id}/feedback", response_model=FeedbackResponse)
 def submit_feedback(task_id: str, request: FeedbackRequest) -> FeedbackResponse:
-    task = _TASKS.get(task_id)
+    task = _get_task_snapshot(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="任务不存在")
     if task["status"] != "interrupted":
@@ -115,9 +129,19 @@ def submit_feedback(task_id: str, request: FeedbackRequest) -> FeedbackResponse:
             Command(resume=resume),
             _thread_config(task["thread_id"]),
         )
-        with _LOCK:
-            _TASKS[task_id]["status"] = "completed"
-            _TASKS[task_id]["result"] = result
+        if "__interrupt__" in result:
+            interrupt = result["__interrupt__"][0]
+            with _LOCK:
+                _TASKS[task_id]["status"] = "interrupted"
+                _TASKS[task_id]["interrupt"] = {
+                    "id": getattr(interrupt, "id", ""),
+                    "value": getattr(interrupt, "value", {}),
+                }
+        else:
+            with _LOCK:
+                _TASKS[task_id]["status"] = "completed"
+                _TASKS[task_id]["result"] = result
+                _TASKS[task_id]["interrupt"] = None
     except Exception as exc:
         with _LOCK:
             _TASKS[task_id]["status"] = "failed"
@@ -128,7 +152,7 @@ def submit_feedback(task_id: str, request: FeedbackRequest) -> FeedbackResponse:
 
 @app.get("/tasks/{task_id}/report", response_model=TaskResponse)
 def get_report(task_id: str) -> TaskResponse:
-    task = _TASKS.get(task_id)
+    task = _get_task_snapshot(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="任务不存在")
     if task["status"] != "completed":
@@ -138,20 +162,41 @@ def get_report(task_id: str) -> TaskResponse:
 
 @app.get("/tasks/{task_id}/events")
 def get_events(task_id: str) -> dict[str, Any]:
-    task = _TASKS.get(task_id)
+    task = _get_task_snapshot(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="任务不存在")
     # 教程返回空事件；生产环境可对接 graph.stream(stream_mode="updates")
     # 或 stream_events(version="v3") 后通过 SSE 推送
-    return {"task_id": task_id, "status": task["status"], "events": []}
+    interrupt = task.get("interrupt") or {}
+    events: list[dict[str, Any]] = []
+    if interrupt:
+        events.append({"type": "interrupt", "data": interrupt})
+    return {"task_id": task_id, "status": task["status"], "events": events}
 
 
 def _to_response(task_id: str) -> TaskResponse:
-    task = _TASKS[task_id]
+    task = _get_task_snapshot(task_id) or _TASKS[task_id]
     result = task.get("result") or {}
+    interrupt = task.get("interrupt") or {}
+    interrupt_value = interrupt.get("value") or {}
+    errors = list(result.get("errors", []))
+    if task.get("error"):
+        errors = [task["error"], *errors]
     return TaskResponse(
         task_id=task_id,
         status=task["status"],
         topic=task["topic"],
+        quality_score=result.get("quality_score", 0),
+        approved=bool(result.get("approved", False)),
+        approved_by=result.get("approved_by", ""),
+        feedback_comment=result.get("feedback_comment", ""),
+        approved_at=result.get("approved_at", ""),
+        missing_points=result.get("missing_points", []),
+        risk_note=result.get("risk_note", ""),
+        draft_report=result.get("draft_report", interrupt_value.get("draft_report", "")),
         final_report=result.get("final_report", ""),
+        interrupt_id=interrupt.get("id", ""),
+        interrupt_question=interrupt_value.get("question", ""),
+        errors=errors,
+        error=task.get("error") or "",
     )
