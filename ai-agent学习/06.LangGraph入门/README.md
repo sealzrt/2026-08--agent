@@ -65,7 +65,7 @@ pytest
 | `LangGraph入门优化方案.md` | 规划：本目录升级方案（含与 LangGraph-笔记 的标杆对比） |
 | `code/step_by_step/` | 前 13 章单文件示例（01-13 逐章对应） |
 | `code/langgraph_intro_project/` | 完整项目（第 07 章起逐步引用，第 14-15 章收束） |
-| `langgraph/` | 80 个 notebook 深度练习（进阶阅读） |
+| `langgraph/` | 近 80 个 notebook 深度练习（进阶阅读） |
 | `requirements_full.txt` | 依赖清单 |
 
 ## 环境要求
