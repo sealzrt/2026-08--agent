@@ -41,15 +41,21 @@ builder.add_edge("summarize_documents", END)
 graph = builder.compile()
 
 
-def to_frontend_event(task_id: str, chunk: dict, status: str = "running") -> dict:
+def to_frontend_event(task_id: str, chunk: dict, status: str = "done") -> dict:
     """把 stream 输出整理成前端可消费的统一事件格式。"""
-    node = list(chunk.keys())[0] if chunk else ""
+    if chunk:
+        node = list(chunk.keys())[0]
+        payload = chunk[node]
+    else:
+        node = ""
+        payload = {}
+
     return {
         "task_id": task_id,
         "node": node,
         "status": status,
         "event_type": "node_update",
-        "payload": chunk.get(node, {}) if chunk else {},
+        "payload": payload,
     }
 
 
