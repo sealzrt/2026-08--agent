@@ -15,11 +15,33 @@ const currentProject = computed(() => app.currentProjectId)
 
 const tableFields = computed(() => props.config.fields.filter((f) => !f.hideInTable))
 
+// ref 类型字段：被引用实体选项（如 feature 列表）
+const refOptions = ref<Record<string, any[]>>({})
+
+async function loadRefs() {
+  const refFields = props.config.fields.filter((f) => f.type === 'ref' && f.refEntity)
+  if (!refFields.length || !currentProject.value) return
+  for (const f of refFields) {
+    try {
+      refOptions.value[f.refEntity!] = await $fetch(
+        `/api/data/${f.refEntity}?projectId=${currentProject.value}`
+      )
+    } catch {
+      refOptions.value[f.refEntity!] = []
+    }
+  }
+}
+
 const loadRows = async () => {
+  // 项目维度强制：必须已选项目才加载
+  if (!currentProject.value) {
+    rows.value = []
+    loading.value = false
+    return
+  }
   loading.value = true
   try {
-    const q = currentProject.value ? `?projectId=${currentProject.value}` : ''
-    rows.value = await $fetch(`/api/data/${props.config.entity}${q}`)
+    rows.value = await $fetch(`/api/data/${props.config.entity}?projectId=${currentProject.value}`)
   } catch (e: any) {
     ElMessage.error(e?.data?.message || e?.message || '加载失败')
   } finally {
@@ -28,15 +50,21 @@ const loadRows = async () => {
 }
 
 // 全局项目切换 → 本页数据联动刷新
-watch(() => app.currentProjectId, () => loadRows())
+watch(() => app.currentProjectId, () => {
+  loadRows()
+  loadRefs()
+})
 
-onMounted(loadRows)
+onMounted(() => {
+  loadRows()
+  loadRefs()
+})
 
 // ===== 对话框 =====
 const dialog = ref({ open: false, mode: 'create', form: {} as Record<string, any> })
 
 function blankForm(): Record<string, any> {
-  const f: Record<string, any> = { projectId: currentProject.value || undefined }
+  const f: Record<string, any> = { projectId: currentProject.value || '' }
   for (const field of props.config.fields) {
     if (field.type === 'boolean') f[field.key] = false
     else if (field.type === 'number') f[field.key] = undefined
@@ -46,6 +74,14 @@ function blankForm(): Record<string, any> {
 }
 
 function openCreate() {
+  if (!app.projects.length) {
+    ElMessage.warning('暂无项目，请先创建项目')
+    return
+  }
+  if (!app.currentProjectId) {
+    ElMessage.warning('请先在顶栏选择「当前项目」')
+    return
+  }
   dialog.value = { open: true, mode: 'create', form: blankForm() }
 }
 
@@ -55,6 +91,11 @@ function openEdit(row: any) {
 
 async function submit() {
   const { form, mode } = dialog.value
+  // 新增业务数据必须归属项目（多项目并行隔离）
+  if (mode === 'create' && !form.projectId) {
+    ElMessage.warning('请选择「所属项目」，所有业务数据按项目管理')
+    return
+  }
   const required = props.config.fields.filter((f) => f.required)
   const missing = required.find((f) => !form[f.key] && form[f.key] !== false)
   if (missing) {
@@ -97,6 +138,10 @@ const projectName = (id?: string) =>
 function cellText(row: any, f: FieldConfig) {
   const v = row[f.key]
   if (v === null || v === undefined) return '—'
+  if (f.type === 'ref' && f.refEntity) {
+    const o = (refOptions.value[f.refEntity] || []).find((x) => x.id === v)
+    return o ? (o.code ? `${o.code} ${o.name}` : o.name) : v
+  }
   if (f.type === 'boolean') return v ? '是' : '否'
   if (f.type === 'number' && f.key === 'probability') return v
   if (f.type === 'enum' && f.options?.length) {
@@ -120,15 +165,12 @@ function cellText(row: any, f: FieldConfig) {
         <el-tag v-if="currentProject" type="primary" effect="plain">
           {{ projectName(currentProject) }}
         </el-tag>
-        <el-tag v-else type="info" effect="plain">全部项目（总监视角）</el-tag>
+        <el-tag v-else type="warning" effect="plain">请选择当前项目</el-tag>
         <el-button type="primary" @click="openCreate">+ 新增</el-button>
       </div>
     </div>
 
     <el-table :data="rows" border size="small" stripe v-loading="loading" style="margin-top: 8px">
-      <el-table-column v-if="!currentProject" label="项目" width="160">
-        <template #default="{ row }">{{ projectName(row.projectId) }}</template>
-      </el-table-column>
       <el-table-column
         v-for="f in tableFields"
         :key="f.key"
@@ -164,7 +206,7 @@ function cellText(row: any, f: FieldConfig) {
       <el-form :model="dialog.form" label-width="120px">
         <el-form-item v-if="dialog.mode === 'create'" label="所属项目">
           <el-select v-model="dialog.form.projectId" clearable style="width: 100%">
-            <el-option v-for="p in projects" :key="p.id" :label="p.name" :value="p.id" />
+            <el-option v-for="p in app.projects" :key="p.id" :label="p.name" :value="p.id" />
           </el-select>
         </el-form-item>
 
@@ -203,6 +245,20 @@ function cellText(row: any, f: FieldConfig) {
             placeholder="选择日期"
           />
           <el-switch v-else-if="f.type === 'boolean'" v-model="dialog.form[f.key]" />
+          <el-select
+            v-else-if="f.type === 'ref'"
+            v-model="dialog.form[f.key]"
+            clearable
+            style="width: 100%"
+            :placeholder="`选择${f.label}`"
+          >
+            <el-option
+              v-for="o in refOptions[f.refEntity!] || []"
+              :key="o.id"
+              :label="(o.code ? o.code + ' ' : '') + (o.name || o.title || o.id)"
+              :value="o.id"
+            />
+          </el-select>
           <el-select v-else-if="f.type === 'enum'" v-model="dialog.form[f.key]" style="width: 100%">
             <el-option v-for="o in f.options" :key="o" :label="o" :value="o" />
           </el-select>

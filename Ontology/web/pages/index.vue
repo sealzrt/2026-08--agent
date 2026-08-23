@@ -22,19 +22,31 @@ const recentRisks = ref<
 const loading = ref(true)
 const backendOk = ref(true)
 
-onMounted(async () => {
+/** 按当前项目加载统计（项目维度强制） */
+const loadStats = async () => {
+  loading.value = true
   try {
-    const [projects, contracts, risks, requirements] = await Promise.all([
-      $fetch('/api/data/project'),
-      $fetch('/api/data/contract'),
-      $fetch('/api/data/risk'),
-      $fetch('/api/data/requirement')
+    const pid = app.currentProjectId
+    if (!pid) {
+      stats.value = [
+        { label: '项目合同数', value: 0, color: '#409eff' },
+        { label: '合同数', value: 0, color: '#67c23a' },
+        { label: '需求数', value: 0, color: '#e6a23c' },
+        { label: '未关闭风险', value: 0, color: '#f56c6c' }
+      ]
+      recentRisks.value = []
+      return
+    }
+    const [contracts, risks, requirements] = await Promise.all([
+      $fetch(`/api/data/contract?projectId=${pid}`),
+      $fetch(`/api/data/risk?projectId=${pid}`),
+      $fetch(`/api/data/requirement?projectId=${pid}`)
     ])
     const openRisks = risks.filter(
       (r: any) => r.status === 'open' || r.status === 'mitigating'
     )
     stats.value = [
-      { label: '项目总数', value: projects.length, color: '#409eff' },
+      { label: '项目合同数', value: contracts.length, color: '#409eff' },
       { label: '合同数', value: contracts.length, color: '#67c23a' },
       { label: '需求数', value: requirements.length, color: '#e6a23c' },
       { label: '未关闭风险', value: openRisks.length, color: '#f56c6c' }
@@ -45,7 +57,10 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+watch(() => app.currentProjectId, () => loadStats())
+onMounted(loadStats)
 
 const severityTag = (s: string) => ({ high: 'danger', medium: 'warning', low: 'success' })[s] ?? 'info'
 </script>
@@ -55,9 +70,19 @@ const severityTag = (s: string) => ({ high: 'danger', medium: 'warning', low: 's
     <div class="page-card">
       <h2 class="page-title">仪表盘</h2>
       <p class="page-desc">
-        当前视角：{{ app.role === 'pm' ? '项目经理（单项目精细管理）' : '项目总监（跨项目风险总览）' }}
-        · 数据存储：本地 SQLite（server/data/ontology.db）
+        当前项目：<b>{{ app.projects.find((p) => p.id === app.currentProjectId)?.name || '未选择' }}</b>
+        · 所有模块按项目维度管理
       </p>
+
+      <el-alert
+        v-if="!app.currentProjectId"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="请选择当前项目"
+        description="所有数据按项目维度管理，请使用顶栏右上角选择「当前项目」。"
+        style="margin-bottom: 16px"
+      />
 
       <el-alert
         v-if="!backendOk"

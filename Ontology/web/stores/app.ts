@@ -28,6 +28,13 @@ export const useAppStore = defineStore('app', {
       } catch {
         this.projects = []
       }
+    },
+    /** 新建项目：创建后自动加入列表并选中为当前项目 */
+    async createProject(data: any) {
+      const p = await $fetch('/api/data/project', { method: 'POST', body: data })
+      this.projects.push(p)
+      this.currentProjectId = p.id
+      return p
     }
   }
 })

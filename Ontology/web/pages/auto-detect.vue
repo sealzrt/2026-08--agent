@@ -14,8 +14,12 @@ const resultMeta = ref<{ docType: string; title: string } | null>(null)
 const route = useRoute()
 
 const loadDocs = async () => {
-  const q = app.currentProjectId ? `?projectId=${app.currentProjectId}` : ''
-  docs.value = await $fetch(`/api/data/document${q}`)
+  if (!app.currentProjectId) {
+    docs.value = []
+    selectedDocId.value = ''
+    return
+  }
+  docs.value = await $fetch(`/api/data/document?projectId=${app.currentProjectId}`)
   const docId = (route.query.docId as string) || docs.value[0]?.id || ''
   if (docId) {
     selectedDocId.value = docId
@@ -55,14 +59,16 @@ const kindLabel: Record<string, string> = {
   instance: '实例',
   risk: '风险',
   class: '新增类',
-  element: '合同要素'
+  element: '合同要素',
+  feature: '功能'
 }
 
 const kindTag: Record<string, string> = {
   instance: '',
   risk: 'danger',
   class: 'warning',
-  element: 'primary'
+  element: 'primary',
+  feature: 'success'
 }
 
 // ===== 编辑识别结果（手动修改后落库）=====
@@ -126,26 +132,104 @@ function saveEdit() {
   ElMessage.success('已更新建议内容，采纳时将按修改后的值写入')
 }
 
-// ===== 采纳落库 =====
+// ===== 采纳落库（前置确认项目归属）=====
+/** 单条采纳：必须已选项目（业务数据强制项目维度） */
 async function applyOne(s: any) {
+  if (s.kind !== 'class' && !app.currentProjectId) {
+    ElMessage.warning('请先在顶栏选择「当前项目」后再采纳')
+    return
+  }
   try {
     if (s.kind === 'class') {
       await $fetch('/api/ontology/classes', { method: 'POST', body: s.fields })
     } else {
-      await $fetch(`/api/data/${s.entity}`, { method: 'POST', body: s.fields })
+      await $fetch(`/api/data/${s.entity}`, {
+        method: 'POST',
+        body: { ...s.fields, projectId: app.currentProjectId }
+      })
     }
-    ElMessage.success(`已采纳：${s.label}`)
+    ElMessage.success(`已采纳：${s.label}（已挂到 ${app.projects.find((p) => p.id === app.currentProjectId)?.name || '当前项目'}）`)
   } catch (e: any) {
     ElMessage.error(`采纳失败：${e?.data?.message || e?.message || '未知错误'}`)
   }
 }
 
-async function applyChecked() {
+// 批量采纳：先弹「确认项目信息」模态框 → 确认后才保存
+const confirmDialog = ref({ open: false, projectId: '' })
+
+// ===== 采纳时「＋ 新建项目」：从文档直接创建项目 =====
+const NEW_PROJECT = '__new__'
+const createProjectDialog = ref({
+  open: false,
+  saving: false,
+  form: { name: '', customer: '', manager: '', status: '售前跟进', startDate: '' }
+})
+
+function onConfirmProjectChange(val: string) {
+  if (val === NEW_PROJECT) {
+    confirmDialog.value.projectId = ''
+    createProjectDialog.value = { ...createProjectDialog.value, open: true }
+  }
+}
+
+async function submitCreateProject() {
+  const f = createProjectDialog.value.form
+  if (!f.name.trim()) {
+    ElMessage.warning('请填写项目名称')
+    return
+  }
+  createProjectDialog.value.saving = true
+  try {
+    const p = await app.createProject({
+      name: f.name.trim(),
+      customer: f.customer.trim() || undefined,
+      manager: f.manager.trim() || undefined,
+      status: f.status,
+      startDate: f.startDate || undefined
+    })
+    // 新项目即归属项目，继续采纳流程
+    confirmDialog.value.projectId = p.id
+    createProjectDialog.value = { open: false, saving: false, form: { name: '', customer: '', manager: '', status: '售前跟进', startDate: '' } }
+    ElMessage.success(`项目「${f.name.trim()}」已创建，将作为归属项目`)
+  } catch (e: any) {
+    ElMessage.error(`创建项目失败：${e?.data?.message || e?.message || '未知错误'}`)
+  } finally {
+    createProjectDialog.value.saving = false
+  }
+}
+
+
+const confirmSummary = computed(() => {
+  const list = suggestions.value.filter((s) => checked.value[s.id])
+  const byKind: Record<string, number> = {}
+  for (const s of list) byKind[s.kind] = (byKind[s.kind] || 0) + 1
+  return {
+    total: list.length,
+    element: byKind.element || 0,
+    risk: byKind.risk || 0,
+    instance: byKind.instance || 0,
+    class: byKind.class || 0,
+    feature: byKind.feature || 0
+  }
+})
+
+function applyChecked() {
   const list = suggestions.value.filter((s) => checked.value[s.id])
   if (!list.length) {
     ElMessage.warning('请先勾选要采纳的建议')
     return
   }
+  // 前置条件：确认项目信息
+  confirmDialog.value = { open: true, projectId: app.currentProjectId || '' }
+}
+
+async function confirmSave() {
+  if (!confirmDialog.value.projectId) {
+    ElMessage.warning('请选择归属项目（所有业务数据按项目管理）')
+    return
+  }
+  const pid = confirmDialog.value.projectId
+  const list = suggestions.value.filter((s) => checked.value[s.id])
   let ok = 0
   const failed: string[] = []
   for (const s of list) {
@@ -153,15 +237,20 @@ async function applyChecked() {
       if (s.kind === 'class') {
         await $fetch('/api/ontology/classes', { method: 'POST', body: s.fields })
       } else {
-        await $fetch(`/api/data/${s.entity}`, { method: 'POST', body: s.fields })
+        await $fetch(`/api/data/${s.entity}`, {
+          method: 'POST',
+          body: { ...s.fields, projectId: pid }
+        })
       }
       ok++
     } catch (e: any) {
       failed.push(`${s.label}：${e?.data?.message || e?.message || '未知错误'}`)
     }
   }
+  confirmDialog.value.open = false
+  const projectName = app.projects.find((p) => p.id === pid)?.name || pid
   if (ok > 0) {
-    ElMessage.success(`已采纳 ${ok} 条`)
+    ElMessage.success(`已采纳 ${ok} 条，全部归属项目「${projectName}」`)
     suggestions.value = []
     resultMeta.value = null
   }
@@ -183,6 +272,13 @@ async function applyChecked() {
         从合同/需求/范围/功能清单/技术方案中识别 <b>实例、风险、缺失本体概念</b>。
         <b>每条建议都可手动编辑</b>，确认后写入本体库与业务库（可控闭环）。
       </p>
+
+      <el-alert :type="app.currentProjectId ? 'success' : 'warning'" :closable="false" show-icon style="margin-bottom: 12px">
+        <template #title>
+          当前项目：<b>{{ app.projects.find((p) => p.id === app.currentProjectId)?.name || '未选择' }}</b>
+          —— 所有数据按项目维度管理，文档列表仅显示该项目的文档；<b>采纳的数据将自动挂到该项目</b>。请在顶栏选择项目。
+        </template>
+      </el-alert>
 
       <div style="display: flex; gap: 12px; align-items: center">
         <el-select v-model="selectedDocId" placeholder="选择文档" style="width: 320px">
@@ -247,6 +343,77 @@ async function applyChecked() {
     <div class="page-card" v-else-if="!running">
       <el-empty description="选择文档后点击「运行自动建模」查看建议" :image-size="80" />
     </div>
+
+    <!-- 批量采纳：确认项目信息（前置条件） -->
+    <el-dialog v-model="confirmDialog.open" title="确认采纳 · 归属项目" width="560px">
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 12px"
+        :title="`将写入 ${confirmSummary.total} 条数据，全部归属所选项目（多项目并行隔离）`"
+      />
+      <el-form label-width="100px">
+        <el-form-item label="归属项目 *" required>
+          <el-select
+            v-model="confirmDialog.projectId"
+            placeholder="请选择归属项目（或新建）"
+            style="width: 100%"
+            @change="onConfirmProjectChange"
+          >
+            <el-option v-for="p in app.projects" :key="p.id" :label="p.name" :value="p.id" />
+            <el-option :value="NEW_PROJECT" label="＋ 新建项目（从文档创建）…" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="采纳摘要">
+          <div style="line-height: 2">
+            <el-tag size="small" type="success" style="margin-right: 6px">功能 {{ confirmSummary.feature }} 条</el-tag>
+            <el-tag size="small" type="primary" style="margin-right: 6px">合同要素 {{ confirmSummary.element }} 条</el-tag>
+            <el-tag size="small" type="danger" style="margin-right: 6px">风险 {{ confirmSummary.risk }} 条</el-tag>
+            <el-tag size="small" style="margin-right: 6px">实例 {{ confirmSummary.instance }} 条</el-tag>
+            <el-tag v-if="confirmSummary.class" size="small" type="warning">新增类 {{ confirmSummary.class }} 条</el-tag>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="confirmDialog.open = false">取消</el-button>
+        <el-button type="primary" @click="confirmSave">确认并保存到该项目</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 采纳时新建项目（从文档创建） -->
+    <el-dialog v-model="createProjectDialog.open" title="新建项目 · 作为采纳数据的归属" width="480px">
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 12px"
+        title="创建后，勾选的建议将全部归属到该项目，后续合同/要素/风险都可按该项目查看"
+      />
+      <el-form label-width="90px">
+        <el-form-item label="项目名称 *" required>
+          <el-input v-model="createProjectDialog.form.name" placeholder="如：某银行数据平台实施项目" />
+        </el-form-item>
+        <el-form-item label="客户">
+          <el-input v-model="createProjectDialog.form.customer" placeholder="客户名称" />
+        </el-form-item>
+        <el-form-item label="项目经理">
+          <el-input v-model="createProjectDialog.form.manager" placeholder="负责人" />
+        </el-form-item>
+        <el-form-item label="生命周期">
+          <el-select v-model="createProjectDialog.form.status" style="width: 100%">
+            <el-option v-for="s in ['售前跟进', '已签约', '实施中', '运维质保', '已关闭']" :key="s" :label="s" :value="s" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开始日期">
+          <el-date-picker v-model="createProjectDialog.form.startDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createProjectDialog.open = false">取消</el-button>
+        <el-button type="primary" :loading="createProjectDialog.saving" @click="submitCreateProject">创建项目</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 编辑识别结果 -->
     <el-dialog v-model="editDialog.open" title="编辑识别结果" width="580px">

@@ -10,10 +10,12 @@ export interface FieldConfig {
   key: string
   /** 表单标签 / 列标题 */
   label: string
-  type: 'string' | 'text' | 'number' | 'date' | 'boolean' | 'enum'
+  type: 'string' | 'text' | 'number' | 'date' | 'boolean' | 'enum' | 'ref'
   required?: boolean
   /** enum 类型时的选项 */
   options?: string[]
+  /** ref 类型时：被引用实体（如 feature），下拉选项来自该实体 */
+  refEntity?: string
   placeholder?: string
   /** 表格中是否隐藏 */
   hideInTable?: boolean
@@ -91,16 +93,33 @@ export const milestoneConfig: EntityConfig = {
   ])
 }
 
+/** 功能清单（全链路对齐锚点） */
+export const featureConfig: EntityConfig = {
+  entity: 'feature',
+  title: '功能清单',
+  desc: '合同功能模块（M01 等），是项目计划/产品方案/需求文档的对齐锚点。优先级：P0 必须/P1 应当/P2 尽力。',
+  fields: fields([
+    { key: 'code', label: '模块编号', type: 'string', required: true, placeholder: '如 M01' },
+    { key: 'name', label: '功能名称', type: 'string', required: true },
+    { key: 'description', label: '功能描述', type: 'text' },
+    { key: 'priority', label: '优先级', type: 'enum', options: ['P0', 'P1', 'P2'] },
+    { key: 'status', label: '状态', type: 'enum', options: ['未开始', '设计中', '开发中', '已完成', '已验收'] },
+    { key: 'contractId', label: '关联合同', type: 'string' },
+    { key: 'source', label: '来源', type: 'enum', options: ['manual', 'rule', 'llm'] }
+  ])
+}
+
 /** 任务 */
 export const taskConfig: EntityConfig = {
   entity: 'task',
   title: '任务',
-  desc: '具体工作项：负责人、计划起止、状态。',
+  desc: '具体工作项：负责人、计划起止、状态，可关联到功能模块（对齐锚点）。',
   fields: fields([
     { key: 'name', label: '任务名称', type: 'string', required: true },
     { key: 'owner', label: '负责人', type: 'string' },
     { key: 'planStart', label: '计划开始', type: 'date' },
     { key: 'planEnd', label: '计划完成', type: 'date' },
+    { key: 'featureId', label: '关联功能', type: 'ref', refEntity: 'feature' },
     { key: 'status', label: '状态', type: 'enum', options: ['待办', '进行中', '已完成', '已阻塞'] }
   ])
 }
@@ -122,7 +141,7 @@ export const progressConfig: EntityConfig = {
 export const requirementConfig: EntityConfig = {
   entity: 'requirement',
   title: '需求管理',
-  desc: '需求清单：优先级、来源、变更次数、确认状态。变更 > 3 次触发需求蔓延风险（M4）。',
+  desc: '需求清单：优先级、来源、变更次数、确认状态。变更 > 3 次触发需求蔓延风险（M4）。可关联功能模块对齐。',
   fields: fields([
     { key: 'reqNo', label: '需求编号', type: 'string', required: true },
     { key: 'title', label: '需求标题', type: 'string', required: true },
@@ -131,6 +150,7 @@ export const requirementConfig: EntityConfig = {
     { key: 'source', label: '来源', type: 'string' },
     { key: 'changeCount', label: '变更次数', type: 'number' },
     { key: 'isConfirmed', label: '已确认', type: 'boolean' },
+    { key: 'featureId', label: '关联功能', type: 'ref', refEntity: 'feature' },
     { key: 'description', label: '描述', type: 'text', hideInTable: true }
   ])
 }
@@ -139,13 +159,14 @@ export const requirementConfig: EntityConfig = {
 export const solutionConfig: EntityConfig = {
   entity: 'solution',
   title: '方案管理',
-  desc: '产品方案与技术方案：评审状态、技术栈、未决项。未评审/存在未决项触发方案风险（M4）。',
+  desc: '产品方案与技术方案：评审状态、技术栈、未决项。未评审/存在未决项触发方案风险（M4）。可关联功能模块对齐。',
   fields: fields([
     { key: 'title', label: '方案标题', type: 'string', required: true },
     { key: 'type', label: '方案类型', type: 'enum', options: ['product', 'technical'] },
     { key: 'reviewStatus', label: '评审状态', type: 'enum', options: ['未评审', '评审中', '已评审', '已定稿'] },
     { key: 'techStack', label: '技术栈', type: 'string' },
     { key: 'hasUnresolvedItems', label: '存在未决项', type: 'boolean' },
+    { key: 'featureId', label: '关联功能', type: 'ref', refEntity: 'feature' },
     { key: 'content', label: '方案内容', type: 'text', hideInTable: true }
   ])
 }

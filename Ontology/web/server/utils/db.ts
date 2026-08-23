@@ -21,6 +21,7 @@ export const ENTITY_TABLES: Record<string, string> = {
   bid: 'bid',
   contract: 'contract',
   contractElement: 'contract_element',
+  feature: 'feature',
   project: 'project',
   milestone: 'milestone',
   task: 'task',
@@ -102,6 +103,10 @@ CREATE TABLE IF NOT EXISTS contract_element (
   id TEXT PRIMARY KEY, project_id TEXT, contract_id TEXT, created_at TEXT, updated_at TEXT,
   category TEXT, content TEXT, detail TEXT, confidence REAL DEFAULT 0, status TEXT
 );
+CREATE TABLE IF NOT EXISTS feature (
+  id TEXT PRIMARY KEY, project_id TEXT, contract_id TEXT, created_at TEXT, updated_at TEXT,
+  name TEXT, code TEXT, description TEXT, priority TEXT, status TEXT, source TEXT
+);
 CREATE TABLE IF NOT EXISTS ops_event (
   id TEXT PRIMARY KEY, project_id TEXT, created_at TEXT, updated_at TEXT,
   ticket_no TEXT, description TEXT, sla_status TEXT,
@@ -131,6 +136,13 @@ export function initDb(): void {
   const contractCols = tableColumns('contract')
   if (!contractCols.includes('bid_id')) {
     db.exec('ALTER TABLE contract ADD COLUMN bid_id TEXT')
+  }
+  // 功能清单锚点：需求/方案/任务 关联功能
+  for (const t of ['requirement', 'solution', 'task'] as const) {
+    const cols = tableColumns(t)
+    if (!cols.includes('feature_id')) {
+      db.exec(`ALTER TABLE ${t} ADD COLUMN feature_id TEXT`)
+    }
   }
 }
 
@@ -235,6 +247,24 @@ export function updateRow(
 export function deleteRow(table: string, id: string): boolean {
   const res = db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id)
   return (res as unknown as { changes: number }).changes > 0
+}
+
+/** 级联删除：删除项目及其全部业务数据（含 project_id 列的业务表） */
+export function deleteRowsByProject(projectId: string): Record<string, number> {
+  const affected: Record<string, number> = {}
+  for (const entity of Object.keys(ENTITY_TABLES)) {
+    const table = ENTITY_TABLES[entity]
+    if (table === 'project' || table === 'ontology_class' || table === 'ontology_property' || table === 'ontology_relation') {
+      continue // 本体全局共享；project 单独删
+    }
+    const cols = tableColumns(table)
+    if (!cols.includes('project_id')) continue
+    const res = db.prepare(`DELETE FROM ${table} WHERE project_id = ?`).run(projectId)
+    affected[table] = (res as unknown as { changes: number }).changes
+  }
+  const p = db.prepare(`DELETE FROM project WHERE id = ?`).run(projectId)
+  affected.project = (p as unknown as { changes: number }).changes
+  return affected
 }
 
 initDb()
