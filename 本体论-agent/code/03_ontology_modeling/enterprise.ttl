@@ -1,0 +1,45 @@
+@prefix ex: <http://example.com/enterprise#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Product a rdfs:Class .
+ex:Module a rdfs:Class .
+ex:Feature a rdfs:Class .
+ex:Issue a rdfs:Class .
+ex:Solution a rdfs:Class .
+
+ex:belongsTo a rdf:Property ;
+    rdfs:domain ex:Product ;
+    rdfs:range ex:Module .
+
+ex:contains a rdf:Property ;
+    rdfs:domain ex:Module ;
+    rdfs:range ex:Feature .
+
+ex:affects a rdf:Property ;
+    rdfs:domain ex:Issue ;
+    rdfs:range ex:Feature .
+
+ex:resolvedBy a rdf:Property ;
+    rdfs:domain ex:Issue ;
+    rdfs:range ex:Solution .
+
+ex:product_a a ex:Product ;
+    ex:name "产品 A" ;
+    ex:belongsTo ex:module_b .
+
+ex:module_b a ex:Module ;
+    ex:name "模块 B" ;
+    ex:contains ex:feature_c .
+
+ex:feature_c a ex:Feature ;
+    ex:name "登录功能" .
+
+ex:issue_d a ex:Issue ;
+    ex:name "登录失败" ;
+    ex:severity "high" ;
+    ex:affects ex:feature_c ;
+    ex:resolvedBy ex:solution_e .
+
+ex:solution_e a ex:Solution ;
+    ex:name "检查身份服务配置" .
