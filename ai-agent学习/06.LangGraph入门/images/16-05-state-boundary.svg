@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="260" viewBox="0 0 1100 260" role="img">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111827"/>
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <rect x="60" y="80" width="130" height="58" rx="8" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+  <text x="125.0" y="115.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="125.0" dy="0">输入</tspan>
+  </text>
+  <rect x="230" y="80" width="130" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+  <text x="295.0" y="115.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="295.0" dy="0">分析</tspan>
+  </text>
+  <rect x="400" y="80" width="130" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+  <text x="465.0" y="115.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="465.0" dy="0">资料</tspan>
+  </text>
+  <rect x="570" y="80" width="130" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+  <text x="635.0" y="115.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="635.0" dy="0">质量</tspan>
+  </text>
+  <rect x="740" y="80" width="130" height="58" rx="8" fill="#fef3c7" stroke="#92400e" stroke-width="2"/>
+  <text x="805.0" y="115.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="805.0" dy="0">控制</tspan>
+  </text>
+  <rect x="910" y="80" width="130" height="58" rx="8" fill="#fee2e2" stroke="#991b1b" stroke-width="2"/>
+  <text x="975.0" y="115.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="975.0" dy="0">审批</tspan>
+  </text>
+  <line x1="190" y1="109" x2="230" y2="109" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="109" x2="400" y2="109" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="530" y1="109" x2="570" y2="109" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="700" y1="109" x2="740" y2="109" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="870" y1="109" x2="910" y2="109" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M805 138 C780 220 290 220 295 138" fill="none" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="540" y="208" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" font-weight="600" fill="#111827">不达标时回到分析/检索</text>
+</svg>

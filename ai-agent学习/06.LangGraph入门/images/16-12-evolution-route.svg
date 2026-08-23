@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="230" viewBox="0 0 1080 230" role="img">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111827"/>
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <rect x="60" y="85" width="130" height="58" rx="8" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+  <text x="125.0" y="120.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="125.0" dy="0">本地脚本</tspan>
+  </text>
+  <rect x="230" y="85" width="130" height="58" rx="8" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+  <text x="295.0" y="120.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="295.0" dy="0">API</tspan>
+  </text>
+  <rect x="400" y="85" width="130" height="58" rx="8" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+  <text x="465.0" y="120.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="465.0" dy="0">持久化</tspan>
+  </text>
+  <rect x="570" y="85" width="130" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+  <text x="635.0" y="120.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="635.0" dy="0">Worker</tspan>
+  </text>
+  <rect x="740" y="85" width="130" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+  <text x="805.0" y="120.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="805.0" dy="0">事件流</tspan>
+  </text>
+  <rect x="910" y="85" width="130" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+  <text x="975.0" y="120.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">
+  <tspan x="975.0" dy="0">治理</tspan>
+  </text>
+  <line x1="190" y1="114" x2="230" y2="114" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="114" x2="400" y2="114" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="530" y1="114" x2="570" y2="114" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="700" y1="114" x2="740" y2="114" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="870" y1="114" x2="910" y2="114" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

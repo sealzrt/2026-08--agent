@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="680" viewBox="0 0 1120 680" role="img">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111827"/>
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <rect x="470" y="30" width="180" height="58" rx="8" fill="#fef3c7" stroke="#92400e" stroke-width="2"/>
+<text x="560.0" y="64.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">业务请求</text>
+  <rect x="470" y="120" width="180" height="58" rx="8" fill="#fef3c7" stroke="#92400e" stroke-width="2"/>
+<text x="560.0" y="154.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">API 接入</text>
+  <rect x="470" y="210" width="180" height="58" rx="8" fill="#fef3c7" stroke="#92400e" stroke-width="2"/>
+<text x="560.0" y="244.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">任务系统</text>
+  <rect x="470" y="300" width="180" height="66" rx="8" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+<text x="560.0" y="338.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">编排层</text>
+  <rect x="160" y="320" width="160" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+<text x="240.0" y="354.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">能力</text>
+  <rect x="770" y="320" width="160" height="58" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+<text x="850.0" y="354.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">存储</text>
+  <rect x="470" y="570" width="180" height="58" rx="8" fill="#fef3c7" stroke="#92400e" stroke-width="2"/>
+<text x="560.0" y="604.0" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="15" font-weight="600" fill="#0f172a">业务结果</text>
+  <line x1="560" y1="88" x2="560" y2="120" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="560" y1="178" x2="560" y2="210" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="560" y1="268" x2="560" y2="300" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="560" y1="366" x2="560" y2="570" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="470" y1="333" x2="320" y2="349" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="650" y1="333" x2="770" y2="349" stroke="#111827" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="560" y="650" text-anchor="middle" font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="13" fill="#334155">治理：权限 / 成本 / 告警 / 测试</text>
+</svg>
