@@ -20,6 +20,7 @@ export const db = new DatabaseSync(resolve(dataDir, 'ontology.db'))
 export const ENTITY_TABLES: Record<string, string> = {
   bid: 'bid',
   contract: 'contract',
+  contractElement: 'contract_element',
   project: 'project',
   milestone: 'milestone',
   task: 'task',
@@ -61,7 +62,7 @@ CREATE TABLE IF NOT EXISTS bid (
 CREATE TABLE IF NOT EXISTS contract (
   id TEXT PRIMARY KEY, project_id TEXT, created_at TEXT, updated_at TEXT,
   contract_no TEXT, amount REAL, signed_date TEXT, scope_text TEXT,
-  has_acceptance_clause INTEGER DEFAULT 0, payment_milestones TEXT
+  has_acceptance_clause INTEGER DEFAULT 0, payment_milestones TEXT, bid_id TEXT
 );
 CREATE TABLE IF NOT EXISTS project (
   id TEXT PRIMARY KEY, project_id TEXT, created_at TEXT, updated_at TEXT,
@@ -97,6 +98,10 @@ CREATE TABLE IF NOT EXISTS risk (
   impact REAL DEFAULT 0, mitigation TEXT, mitigation_status TEXT,
   status TEXT, source TEXT, related_entity_id TEXT
 );
+CREATE TABLE IF NOT EXISTS contract_element (
+  id TEXT PRIMARY KEY, project_id TEXT, contract_id TEXT, created_at TEXT, updated_at TEXT,
+  category TEXT, content TEXT, detail TEXT, confidence REAL DEFAULT 0, status TEXT
+);
 CREATE TABLE IF NOT EXISTS ops_event (
   id TEXT PRIMARY KEY, project_id TEXT, created_at TEXT, updated_at TEXT,
   ticket_no TEXT, description TEXT, sla_status TEXT,
@@ -122,6 +127,11 @@ CREATE TABLE IF NOT EXISTS document (
 
 export function initDb(): void {
   db.exec(SCHEMA)
+  // 轻量迁移：为已存在的旧表补列（CREATE TABLE IF NOT EXISTS 不会改旧表）
+  const contractCols = tableColumns('contract')
+  if (!contractCols.includes('bid_id')) {
+    db.exec('ALTER TABLE contract ADD COLUMN bid_id TEXT')
+  }
 }
 
 /** 读取表的所有列名（动态校验用） */

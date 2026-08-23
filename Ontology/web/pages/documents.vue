@@ -21,13 +21,16 @@ const docTypes = ['合同内容', '项目范围', '功能清单', '产品原型'
 const loadDocs = async () => {
   loading.value = true
   try {
-    docs.value = await $fetch('/api/data/document')
+    const q = app.currentProjectId ? `?projectId=${app.currentProjectId}` : ''
+    docs.value = await $fetch(`/api/data/document${q}`)
   } catch (e: any) {
     ElMessage.error(e?.data?.message || e?.message || '加载失败')
   } finally {
     loading.value = false
   }
 }
+
+watch(() => app.currentProjectId, () => loadDocs())
 onMounted(loadDocs)
 
 async function doUpload(options: any) {

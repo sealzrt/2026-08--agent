@@ -11,7 +11,7 @@ import { listRows } from '~/server/utils/db'
 
 interface Suggestion {
   id: string
-  kind: 'instance' | 'risk' | 'class'
+  kind: 'instance' | 'risk' | 'class' | 'element'
   entity: string
   label: string
   fields: Record<string, unknown>
@@ -72,6 +72,360 @@ function analyzeContract(text: string): Suggestion[] {
       confidence: 0.75
     })
   }
+
+  // ========== 合同通用信号检查（让合同也能识别更多风险与字段）==========
+
+  // 1. 验收标准：抽取若干条 + 风险提示
+  const accStdCount = (text.match(/验收标准/g) || []).length
+  if (accStdCount >= 2) {
+    fields.acceptanceStandards = `合同含 ${accStdCount} 处验收标准`
+    out.push({
+      id: 'risk_acceptance_density',
+      kind: 'risk',
+      entity: 'risk',
+      label: '验收标准密集',
+      fields: {
+        title: '验收标准密集，需逐项跟踪',
+        riskType: '验收风险',
+        severity: 'medium',
+        probability: 0.6,
+        impact: 0.6,
+        mitigation: '建立验收标准清单并逐项勾选，避免漏项',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: `合同中出现 ${accStdCount} 处"验收标准"，需逐项跟踪`,
+      confidence: 0.75
+    })
+  }
+
+  // 2. 变更条款密集 → 范围管理风险
+  const changeCount = (text.match(/变更/g) || []).length
+  if (changeCount >= 10) {
+    fields.changeManagement = `合同含 ${changeCount} 处变更相关条款`
+    out.push({
+      id: 'risk_change_density',
+      kind: 'risk',
+      entity: 'risk',
+      label: '合同变更条款密集',
+      fields: {
+        title: '合同变更条款密集，需加强变更管理',
+        riskType: '范围风险',
+        severity: 'medium',
+        probability: 0.7,
+        impact: 0.7,
+        mitigation: '建立变更控制委员会（CCB），所有变更走评审+书面确认',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: `合同中出现 ${changeCount} 处"变更"相关条款，变更管理风险高`,
+      confidence: 0.8
+    })
+  }
+
+  // 3. 风险条款 / 违约责任 → 提取为风险（提示项目存在已识别风险）
+  const riskWordCount = (text.match(/风险/g) || []).length
+  const breachCount = (text.match(/违约/g) || []).length
+  if (riskWordCount >= 2 || breachCount >= 3) {
+    fields.legalClauses = `风险条款 ${riskWordCount} 处，违约责任 ${breachCount} 处`
+    out.push({
+      id: 'risk_legal_complexity',
+      kind: 'risk',
+      entity: 'risk',
+      label: '合同法律条款复杂',
+      fields: {
+        title: '合同法律条款复杂，违约责任多',
+        riskType: '回款风险',
+        severity: 'low',
+        probability: 0.5,
+        impact: 0.4,
+        mitigation: '法务复核关键条款，建立违约台账定期回顾',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: `合同含 ${riskWordCount} 处"风险"、${breachCount} 处"违约"条款`,
+      confidence: 0.65
+    })
+  }
+
+  // 4. 保密 / 知识产权 / 源代码 → 提取并提示
+  if (/保密|保密义务|保密期/.test(text)) {
+    fields.confidentiality = '合同含保密条款'
+    out.push({
+      id: 'risk_confidentiality',
+      kind: 'risk',
+      entity: 'risk',
+      label: '合同含保密义务',
+      fields: {
+        title: '合同含保密义务，需落实保密管理',
+        riskType: '技术风险',
+        severity: 'low',
+        probability: 0.4,
+        impact: 0.5,
+        mitigation: '项目成员签署保密承诺，文档分级管理',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: '合同文本中检测到"保密/保密义务/保密期"',
+      confidence: 0.6
+    })
+  }
+  if (/源代码|知识产权|版权|著作权/.test(text)) {
+    fields.intellectualProperty = '合同含源代码/知识产权条款'
+  }
+
+  // 5. 质保 / 培训 / 维护 → 提示服务期
+  if (/质保|保修|维护期/.test(text)) {
+    fields.warrantyService = '合同含质保/维护条款'
+  }
+  if (/培训/.test(text)) {
+    fields.trainingService = '合同含培训条款'
+  }
+
+  // 6. 项目团队 → 提取人员配置
+  const teamMatch = text.match(/(?:项目组|核心人员|项目团队)[：:\s]*([^\n]{0,200})/)
+  if (teamMatch) {
+    fields.teamConfig = teamMatch[0]
+  }
+
+  // 7. 通用未决/模糊（之前漏的）→ 兜底
+  if (/未决|待定|TODO|TBD|暂定|未明确|待解决|待定项/.test(text)) {
+    out.push({
+      id: 'risk_unresolved',
+      kind: 'risk',
+      entity: 'risk',
+      label: '合同存在未决事项',
+      fields: {
+        title: '合同存在未决事项',
+        riskType: '范围风险',
+        severity: 'medium',
+        probability: 0.6,
+        impact: 0.5,
+        mitigation: '逐项跟踪未决事项并设定解决时限',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: '合同中检测到"未决/待定/TODO"等表述',
+      confidence: 0.7
+    })
+  }
+  if (/未评审|待评审|评审中/.test(text)) {
+    out.push({
+      id: 'risk_review_pending',
+      kind: 'risk',
+      entity: 'risk',
+      label: '合同存在未评审条款',
+      fields: {
+        title: '合同存在未评审/待评审条款',
+        riskType: '范围风险',
+        severity: 'low',
+        probability: 0.5,
+        impact: 0.4,
+        mitigation: '组织相关方评审未确定条款',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: '合同中检测到"未评审/待评审"表述',
+      confidence: 0.6
+    })
+  }
+  if (/首次|第一次|不熟悉|自研|全新/.test(text) && /技术|开发|架构/.test(text)) {
+    out.push({
+      id: 'risk_tech_new',
+      kind: 'risk',
+      entity: 'risk',
+      label: '合同涉及新技术',
+      fields: {
+        title: '合同涉及新技术/首次使用',
+        riskType: '技术风险',
+        severity: 'medium',
+        probability: 0.6,
+        impact: 0.6,
+        mitigation: '开展技术预研/POC 验证，储备备选方案',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: '合同中检测到"首次/新技术"等技术相关表述',
+      confidence: 0.55
+    })
+  }
+
+  // 8. 大量交付物 → 交付管理风险
+  const deliverCount = (text.match(/交付/g) || []).length
+  if (deliverCount >= 10) {
+    out.push({
+      id: 'risk_deliver_density',
+      kind: 'risk',
+      entity: 'risk',
+      label: '合同交付条款密集',
+      fields: {
+        title: '合同交付条款密集',
+        riskType: '交付质量风险',
+        severity: 'low',
+        probability: 0.5,
+        impact: 0.5,
+        mitigation: '建立交付物清单和交付节奏表',
+        mitigationStatus: '未制定',
+        status: 'open',
+        source: 'rule'
+      },
+      reason: `合同中出现 ${deliverCount} 处"交付"`,
+      confidence: 0.6
+    })
+  }
+
+  // ===== 合同关键要素抽取（实施风险判断基线）=====
+  out.push(...extractContractElements(text, out))
+
+  return out
+}
+
+// ===== 合同关键要素抽取 =====
+// 用户核心需求：金额 / 关键节点 / 关键事项 / 功能清单 / 交付物 / 维保 / 关键指标
+// 这些要素是后续实施过程判断风险（延期、遗漏、偏移）的关键基线
+const ELEMENT_LABELS: Record<string, string> = {
+  amount: '合同金额',
+  node: '关键节点',
+  keyItem: '关键事项',
+  feature: '功能清单',
+  deliverable: '交付物',
+  warranty: '维保',
+  metric: '关键指标'
+}
+
+function extractContractElements(text: string, existing: Suggestion[]): Suggestion[] {
+  const out: Suggestion[] = []
+  const used = new Set(existing.map((s) => s.fields?.category || ''))
+
+  const add = (
+    category: string,
+    content: string,
+    detail: string,
+    reason: string,
+    confidence: number,
+    contractId?: string
+  ) => {
+    const label = ELEMENT_LABELS[category] || category
+    out.push({
+      id: `elem_${category}_${out.length + 1}`,
+      kind: 'element',
+      entity: 'contractElement',
+      label: `${label}：${content.slice(0, 26)}`,
+      fields: {
+        category,
+        content: content.slice(0, 200),
+        detail: detail.slice(0, 200),
+        contractId: contractId || undefined,
+        status: 'pending',
+        confidence
+      },
+      reason,
+      confidence
+    })
+  }
+
+  // 1. 合同金额（多格式：万/元/万元整）
+  const amtRe = /(?:合同金额|合同总价|合同价款|项目金额|总金额|合同价格)[：:]\s*([0-9,，.]+(?:\s*万元|\s*元)?)/g
+  const amtList: string[] = []
+  for (const m of text.matchAll(amtRe)) {
+    const v = m[1].replace(/[，,]/g, '')
+    if (!amtList.includes(v)) amtList.push(v)
+  }
+  for (const v of amtList.slice(0, 2)) {
+    add('amount', `合同金额 ${v}`, `抽取自：${v}`, `匹配到金额 "${v}"`, 0.85)
+  }
+
+  // 2. 关键节点（付款/交付/上线/验收/里程碑 + 时间/比例）
+  const nodeRe = /(?:付款|支付|交付|上线|验收|里程碑|结项)[^。\n]{0,50}?(?:%|％|日前|日内|月内|个月内|工作日内|节点)/g
+  let nodeIdx = 0
+  const nodeSeen = new Set<string>()
+  for (const m of text.matchAll(nodeRe)) {
+    const s = m[0].trim()
+    if (s.length > 8 && !nodeSeen.has(s)) {
+      nodeSeen.add(s)
+      nodeIdx++
+      if (nodeIdx > 6) break
+      add('node', s, '付款/交付/验收节点', `检测到关键节点：${s.slice(0, 40)}`, 0.7)
+    }
+  }
+
+  // 3. 关键事项（须/必须/应/不得/严禁 的义务性条款）
+  const dutyRe = /(?:乙方|甲方|乙方应|甲方应|供应商|受托方)[^。\n]{0,30}?(?:须|必须|应|不得|严禁|负责|应当在|于)[^。\n]{0,50}。/g
+  let dutyIdx = 0
+  const dutySeen = new Set<string>()
+  for (const m of text.matchAll(dutyRe)) {
+    const s = m[0].trim()
+    if (s.length > 12 && !dutySeen.has(s)) {
+      dutySeen.add(s)
+      dutyIdx++
+      if (dutyIdx > 8) break
+      add('keyItem', s, '合同义务性要求', `检测到关键事项：${s.slice(0, 40)}`, 0.6)
+    }
+  }
+
+  // 4. 功能清单（功能/模块/系统支持/包含功能）
+  const featRe = /(?:功能|模块|子系统|系统支持)[^。\n]{0,40}?(?:包括|包含|如下|实现|支持|提供)[^。\n]{0,60}/g
+  let featIdx = 0
+  const featSeen = new Set<string>()
+  for (const m of text.matchAll(featRe)) {
+    const s = m[0].trim()
+    if (s.length > 10 && !featSeen.has(s)) {
+      featSeen.add(s)
+      featIdx++
+      if (featIdx > 6) break
+      add('feature', s, '功能范围', `检测到功能范围：${s.slice(0, 40)}`, 0.6)
+    }
+  }
+
+  // 5. 交付物（交付物/提交物/成果/文档交付）
+  const delivRe = /(?:交付物|提交物|成果物|提交|交付)[^。\n]{0,40}?(?:文档|报告|清单|系统|源码|手册|方案)[^。\n]{0,50}/g
+  let delivIdx = 0
+  const delivSeen = new Set<string>()
+  for (const m of text.matchAll(delivRe)) {
+    const s = m[0].trim()
+    if (s.length > 10 && !delivSeen.has(s)) {
+      delivSeen.add(s)
+      delivIdx++
+      if (delivIdx > 6) break
+      add('deliverable', s, '交付物', `检测到交付物：${s.slice(0, 40)}`, 0.6)
+    }
+  }
+
+  // 6. 维保（质保/维护/维保/保修 + 期限）
+  const warRe = /(?:质保|维保|维护|保修|维护期|质保期)[^。\n]{0,40}(?:年|月|日|天|期间|期内|期限|免费)[^。\n]{0,30}/g
+  let warIdx = 0
+  const warSeen = new Set<string>()
+  for (const m of text.matchAll(warRe)) {
+    const s = m[0].trim()
+    if (s.length > 8 && !warSeen.has(s)) {
+      warSeen.add(s)
+      warIdx++
+      if (warIdx > 4) break
+      add('warranty', s, '质保/维保条款', `检测到维保条款：${s.slice(0, 40)}`, 0.65)
+    }
+  }
+
+  // 7. 关键指标（性能/可用性/并发/响应时间/指标/率）
+  const metRe = /(?:性能指标|关键指标|指标|可用性|并发|响应时间|成功率|准确率|稳定性|SLA)[^。\n]{0,50}(?:%|％|秒|分钟|毫秒|用户|以上|以内|不低于|不低于)[^。\n]{0,30}/g
+  let metIdx = 0
+  const metSeen = new Set<string>()
+  for (const m of text.matchAll(metRe)) {
+    const s = m[0].trim()
+    if (s.length > 8 && !metSeen.has(s)) {
+      metSeen.add(s)
+      metIdx++
+      if (metIdx > 6) break
+      add('metric', s, '关键指标', `检测到关键指标：${s.slice(0, 40)}`, 0.65)
+    }
+  }
+
   return out
 }
 

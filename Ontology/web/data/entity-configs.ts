@@ -54,7 +54,25 @@ export const contractConfig: EntityConfig = {
     { key: 'signedDate', label: '签订日期', type: 'date' },
     { key: 'hasAcceptanceClause', label: '验收条款明确', type: 'boolean' },
     { key: 'scopeText', label: '项目范围', type: 'text' },
-    { key: 'paymentMilestones', label: '付款里程碑', type: 'text', hideInTable: true }
+    { key: 'paymentMilestones', label: '付款里程碑', type: 'text', hideInTable: true },
+    { key: 'bidId', label: '关联商机', type: 'string' }
+  ])
+}
+
+/** 项目（系统主线维度） */
+export const projectConfig: EntityConfig = {
+  entity: 'project',
+  title: '项目管理',
+  desc: '项目是系统主线维度。生命周期：售前跟进 → 已签约 → 实施中 → 运维质保 → 已关闭。',
+  fields: fields([
+    { key: 'name', label: '项目名称', type: 'string', required: true },
+    { key: 'customer', label: '客户', type: 'string' },
+    { key: 'manager', label: '项目经理', type: 'string' },
+    { key: 'director', label: '项目总监', type: 'string' },
+    { key: 'startDate', label: '开始日期', type: 'date' },
+    { key: 'endDate', label: '计划结束', type: 'date' },
+    { key: 'status', label: '生命周期', type: 'enum', options: ['售前跟进', '已签约', '实施中', '运维质保', '已关闭'] },
+    { key: 'phase', label: '阶段', type: 'enum', options: ['presales', 'implementation', 'ops'] }
   ])
 }
 
@@ -200,6 +218,20 @@ export const stakeholderConfig: EntityConfig = {
     { key: 'role', label: '角色', type: 'string' },
     { key: 'party', label: '归属', type: 'enum', options: ['customer', 'vendor'] },
     { key: 'contact', label: '联系方式', type: 'string' }
+  ])
+}
+
+/** 合同关键要素（实施风险判断基线） */
+export const contractElementConfig: EntityConfig = {
+  entity: 'contractElement',
+  title: '合同关键要素',
+  desc: '从合同中抽取的关键要素：金额/关键节点/关键事项/功能清单/交付物/维保/关键指标。后续实施中对照判断延期、遗漏、偏移风险。',
+  fields: fields([
+    { key: 'category', label: '要素类别', type: 'enum', options: ['amount', 'node', 'keyItem', 'feature', 'deliverable', 'warranty', 'metric'] },
+    { key: 'content', label: '要素内容', type: 'text', required: true },
+    { key: 'detail', label: '详细说明', type: 'text' },
+    { key: 'contractId', label: '关联合同', type: 'string' },
+    { key: 'status', label: '跟踪状态', type: 'enum', options: ['pending', 'tracking', 'done', 'risk'] }
   ])
 }
 

@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useAppStore } from '~/stores/app'
 import type { EntityConfig, FieldConfig } from '~/data/entity-configs'
 
 const props = defineProps<{ config: EntityConfig }>()
+const app = useAppStore()
 
-// ===== 数据 =====
+// ===== 数据（跟随全局项目上下文）=====
 const rows = ref<any[]>([])
 const loading = ref(false)
-const projects = ref<any[]>([])
-const currentProject = ref<string>('')
-const showAllProjects = ref(true)
+
+/** 当前项目 = 全局顶栏选择器；空 = 全部（总监视角） */
+const currentProject = computed(() => app.currentProjectId)
 
 const tableFields = computed(() => props.config.fields.filter((f) => !f.hideInTable))
 
@@ -25,23 +27,10 @@ const loadRows = async () => {
   }
 }
 
-const loadProjects = async () => {
-  try {
-    projects.value = await $fetch('/api/data/project')
-  } catch {
-    /* 项目加载失败不阻塞 */
-  }
-}
+// 全局项目切换 → 本页数据联动刷新
+watch(() => app.currentProjectId, () => loadRows())
 
-const onProjectChange = (val: string) => {
-  showAllProjects.value = !val
-  loadRows()
-}
-
-onMounted(() => {
-  loadProjects()
-  loadRows()
-})
+onMounted(loadRows)
 
 // ===== 对话框 =====
 const dialog = ref({ open: false, mode: 'create', form: {} as Record<string, any> })
@@ -103,7 +92,7 @@ async function remove(row: any) {
 
 // ===== 显示辅助 =====
 const projectName = (id?: string) =>
-  projects.value.find((p) => p.id === id)?.name || (id ? id : '—')
+  app.projects.find((p) => p.id === id)?.name || (id ? id : '—')
 
 function cellText(row: any, f: FieldConfig) {
   const v = row[f.key]
@@ -128,27 +117,16 @@ function cellText(row: any, f: FieldConfig) {
         <p class="page-desc">{{ config.desc }}</p>
       </div>
       <div style="display: flex; gap: 8px; align-items: center">
-        <el-select
-          v-model="currentProject"
-          placeholder="全部项目"
-          clearable
-          size="default"
-          style="width: 200px"
-          @change="onProjectChange"
-        >
-          <el-option
-            v-for="p in projects"
-            :key="p.id"
-            :label="p.name"
-            :value="p.id"
-          />
-        </el-select>
+        <el-tag v-if="currentProject" type="primary" effect="plain">
+          {{ projectName(currentProject) }}
+        </el-tag>
+        <el-tag v-else type="info" effect="plain">全部项目（总监视角）</el-tag>
         <el-button type="primary" @click="openCreate">+ 新增</el-button>
       </div>
     </div>
 
     <el-table :data="rows" border size="small" stripe v-loading="loading" style="margin-top: 8px">
-      <el-table-column v-if="!showAllProjects" label="项目" width="160">
+      <el-table-column v-if="!currentProject" label="项目" width="160">
         <template #default="{ row }">{{ projectName(row.projectId) }}</template>
       </el-table-column>
       <el-table-column
@@ -165,8 +143,9 @@ function cellText(row: any, f: FieldConfig) {
           <span v-else>{{ cellText(row, f) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right">
+      <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
+          <slot name="rowActions" :row="row" />
           <el-button size="small" link @click="openEdit(row)">编辑</el-button>
           <el-button size="small" link type="danger" @click="remove(row)">删除</el-button>
         </template>

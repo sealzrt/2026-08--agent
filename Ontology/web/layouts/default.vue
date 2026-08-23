@@ -3,10 +3,21 @@ import { useAppStore } from '~/stores/app'
 
 const app = useAppStore()
 
+onMounted(() => {
+  app.loadProjects()
+})
+
+const currentProjectName = computed(
+  () => app.projects.find((p) => p.id === app.currentProjectId)?.name || ''
+)
+
 const menuGroups = [
   {
     label: '总览',
-    items: [{ path: '/', label: '仪表盘', icon: '📊' }]
+    items: [
+      { path: '/', label: '仪表盘', icon: '📊' },
+      { path: '/project', label: '项目总览', icon: '📁' }
+    ]
   },
   {
     label: '本体',
@@ -69,15 +80,27 @@ const menuGroups = [
         <div class="header-left">项目实施全链路风险管控</div>
         <div class="header-right">
           <el-select
+            v-model="app.currentProjectId"
+            placeholder="选择当前项目"
+            size="small"
+            style="width: 220px; margin-right: 12px"
+            @change="app.setCurrentProject"
+          >
+            <el-option label="全部项目（总监视角）" value="" />
+            <el-option v-for="p in app.projects" :key="p.id" :label="p.name" :value="p.id" />
+          </el-select>
+          <el-tag v-if="app.currentProjectId" type="primary" size="small" effect="plain">
+            {{ currentProjectName }}
+          </el-tag>
+          <el-select
             v-model="app.role"
             size="small"
-            style="width: 140px; margin-right: 12px"
+            style="width: 140px; margin-left: 12px"
             @change="app.setRole"
           >
             <el-option label="项目经理视角" value="pm" />
             <el-option label="项目总监视角" value="director" />
           </el-select>
-          <el-tag type="info" size="small">本地 SQLite · M1 骨架</el-tag>
         </div>
       </el-header>
       <el-main class="main">

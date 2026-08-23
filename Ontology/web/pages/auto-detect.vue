@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
+import { useAppStore } from '~/stores/app'
 
+const app = useAppStore()
 const docs = ref<any[]>([])
 const selectedDocId = ref<string>('')
 const loading = ref(false)
@@ -12,12 +14,14 @@ const resultMeta = ref<{ docType: string; title: string } | null>(null)
 const route = useRoute()
 
 const loadDocs = async () => {
-  docs.value = await $fetch('/api/data/document')
+  const q = app.currentProjectId ? `?projectId=${app.currentProjectId}` : ''
+  docs.value = await $fetch(`/api/data/document${q}`)
   const docId = (route.query.docId as string) || docs.value[0]?.id || ''
   if (docId) {
     selectedDocId.value = docId
   }
 }
+watch(() => app.currentProjectId, () => loadDocs())
 onMounted(loadDocs)
 
 async function runExtract() {
@@ -50,13 +54,15 @@ async function runExtract() {
 const kindLabel: Record<string, string> = {
   instance: '实例',
   risk: '风险',
-  class: '新增类'
+  class: '新增类',
+  element: '合同要素'
 }
 
 const kindTag: Record<string, string> = {
   instance: '',
   risk: 'danger',
-  class: 'warning'
+  class: 'warning',
+  element: 'primary'
 }
 
 // ===== 编辑识别结果（手动修改后落库）=====
@@ -85,7 +91,12 @@ const KEY_LABELS: Record<string, string> = {
   code: '英文标识',
   phase: '阶段',
   description: '说明',
-  title2: '标题'
+  title2: '标题',
+  category: '要素类别',
+  content: '要素内容',
+  detail: '详细说明',
+  confidence: '置信度',
+  contractId: '关联合同'
 }
 
 const EDIT_OPTIONS: Record<string, string[]> = {
@@ -95,7 +106,9 @@ const EDIT_OPTIONS: Record<string, string[]> = {
   mitigationStatus: ['未制定', '制定中', '已落实'],
   riskType: ['验收风险', '范围风险', '进度风险', '技术风险', '交付质量风险', 'SLA违约风险', '回款风险'],
   priority: ['高', '中', '低'],
-  phase: ['presales', 'implementation', 'ops', 'common']
+  phase: ['presales', 'implementation', 'ops', 'common'],
+  category: ['amount', 'node', 'keyItem', 'feature', 'deliverable', 'warranty', 'metric'],
+  elementStatus: ['pending', 'tracking', 'done', 'risk']
 }
 
 const editDialog = ref({ open: false, index: -1, fields: {} as Record<string, any> })
@@ -134,6 +147,7 @@ async function applyChecked() {
     return
   }
   let ok = 0
+  const failed: string[] = []
   for (const s of list) {
     try {
       if (s.kind === 'class') {
@@ -142,16 +156,20 @@ async function applyChecked() {
         await $fetch(`/api/data/${s.entity}`, { method: 'POST', body: s.fields })
       }
       ok++
-    } catch {
-      /* 单条失败跳过 */
+    } catch (e: any) {
+      failed.push(`${s.label}：${e?.data?.message || e?.message || '未知错误'}`)
     }
   }
   if (ok > 0) {
-    ElMessage.success(`已采纳 ${ok} 条，可在对应模块查看`)
+    ElMessage.success(`已采纳 ${ok} 条`)
     suggestions.value = []
     resultMeta.value = null
-  } else {
-    ElMessage.error('全部采纳失败，请检查是否与已有数据冲突')
+  }
+  if (failed.length) {
+    ElMessage.error(`失败 ${failed.length} 条：${failed.slice(0, 3).join('；')}${failed.length > 3 ? '…' : ''}`)
+  }
+  if (ok === 0) {
+    ElMessage.error('全部采纳失败，请检查原因')
   }
 }
 </script>
