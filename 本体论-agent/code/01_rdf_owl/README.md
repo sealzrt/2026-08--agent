@@ -23,6 +23,6 @@ python minimal_rdf.py
 ```mermaid
 flowchart LR
     P[product_a<br/>产品 A] -->|belongsTo| M[module_b<br/>模块 B]
-    P -. RDF.type .-> PC[Product]
-    M -. RDF.type .-> MC[Module]
+    P -.->|RDF.type| PC[Product]
+    M -.->|RDF.type| MC[Module]
 ```
