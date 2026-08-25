@@ -1,0 +1,7 @@
+flowchart TD
+    ACT[关键动作<br/>关闭风险 G01 / 确认里程碑 G02<br/>提交进度 G03 / 发布本体 G04] --> GATE{闸门检查}
+    GATE -->|未命中| PASS[放行]
+    GATE -->|命中拦截规则| BLOCK[拦截 + 提示整改]
+    GATE -->|高风险动作| EVID{有证据?<br/>FR-27}
+    EVID -->|否| BLOCK
+    EVID -->|是| PASS

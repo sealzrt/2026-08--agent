@@ -1,0 +1,19 @@
+gantt
+    title MVP 里程碑（M1-M5，约 14 周）
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+    section M1 骨架
+    工程搭建+DB+前后端联通      :m1, 2026-08-24, 10d
+    section M2 本体建模工作台
+    本体 CRUD+图谱+发布流        :m2, after m1, 15d
+    section M3 业务数据
+    实体 CRUD+示例数据           :m3a, after m2, 10d
+    文档上传+解析+版本           :m3b, after m2, 12d
+    section M4 识别流水线（核心）
+    规则引擎+预置规则            :m4a, after m3b, 12d
+    模板抽取（合同模板先行）     :m4b, after m3b, 14d
+    人审核队列                   :m4c, after m4b, 7d
+    闸门+审计追溯                :m4d, after m4a, 10d
+    section M5 展示与收尾
+    风险驾驶舱+关系图谱          :m5, after m4c, 12d
+    示例数据+演示模式+文档        :m6, after m5, 7d
