@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>项目列表</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>项目列表</h1>
+      <div class="subtitle">Agent 的工作空间管理（FR-01）——每个项目是独立的业务上下文，数据互不可见（FR-03）</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('新建项目（FR-01）：填写名称/客户/周期后创建，独立 project_id 隔离')">+ 新建项目</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">全部项目 <span class="hint">共 1 个项目</span></div>
+    <table>
+      <tr>
+        <th>项目名称</th>
+        <th>客户</th>
+        <th>周期</th>
+        <th>阶段</th>
+        <th>风险数</th>
+        <th>高等级</th>
+        <th>操作</th>
+      </tr>
+      <tr>
+        <td class="fw-600">摸鱼智慧供应链管理平台</td>
+        <td>摸鱼科技</td>
+        <td>2026-07-01 ~ 2027-06-30</td>
+        <td><span class="badge badge-blue">实施阶段</span></td>
+        <td>4</td>
+        <td><span class="badge badge-red">1</span></td>
+        <td>
+          <button class="btn btn-sm" onclick="parent.document.getElementById('frame').src='workspace.html'">进入</button>
+          <button class="btn btn-sm" onclick="alert('编辑项目基本信息（FR-01）')">编辑</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="text-2">（可新建示例项目二验证多项目统计 FR-43 / A06）</td>
+        <td class="text-2">—</td>
+        <td class="text-2">—</td>
+        <td class="text-2">—</td>
+        <td class="text-2">0</td>
+        <td class="text-2">0</td>
+        <td><button class="btn btn-sm" onclick="alert('创建第二个项目后，仪表盘将正确统计两个项目的风险数（验收 A06）')">新建</button></td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

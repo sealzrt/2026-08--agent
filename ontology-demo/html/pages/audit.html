@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>要素审核</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>要素审核</h1>
+      <div class="subtitle">Agent 提交的要素候选，由你逐条确认/驳回/修改（FR-14 / FR-19，US-02）——驳回原因会入库，供 Agent 学习</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('批量确认当前筛选条件下全部候选（FR-14）')">批量确认</button>
+    </div>
+  </div>
+
+  <!-- 审核统计 -->
+  <div class="grid grid-4 mb-16">
+    <div class="stat-card stat-blue">
+      <div class="label">待审核</div>
+      <div class="value">12</div>
+      <div class="sub">来自合同模板 ContractExtractor</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="label">已确认</div>
+      <div class="value">18</div>
+      <div class="sub">已进入推理层（FR-21 运行规则）</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">已驳回</div>
+      <div class="value">3</div>
+      <div class="sub">驳回原因已入库（学习数据）</div>
+    </div>
+    <div class="stat-card stat-amber">
+      <div class="label">低置信度</div>
+      <div class="value">4</div>
+      <div class="sub">置信度 < 70%，建议人工核对</div>
+    </div>
+  </div>
+
+  <!-- 要素候选列表 -->
+  <div class="card">
+    <div class="card-title">要素候选 <span class="hint">字段锚定本体（grounding）：抽取值 → 本体类.属性</span></div>
+    <table>
+      <tr>
+        <th>字段名</th>
+        <th>抽取值</th>
+        <th>置信度</th>
+        <th>来源段落</th>
+        <th>操作</th>
+      </tr>
+      <tr>
+        <td class="fw-600">合同编号 <span class="text-sm text-2">(Contract.contract_no)</span></td>
+        <td class="mono">HT-2026-DEV-0823</td>
+        <td><span class="badge badge-green">95%</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="alert('跳转原文 D1-v1-1.1（FR-19）')">D1-v1-1.1</button></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="alert('已确认：要素入库')">确认</button>
+          <button class="btn btn-sm" onclick="openModal('驳回')">驳回</button>
+          <button class="btn btn-sm" onclick="openModal('修改')">修改</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="fw-600">甲方 <span class="text-sm text-2">(Contract.party_a)</span></td>
+        <td>摸鱼科技（有限）公司</td>
+        <td><span class="badge badge-green">92%</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="alert('跳转原文 D1-v1-1.2')">D1-v1-1.2</button></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="alert('已确认')">确认</button>
+          <button class="btn btn-sm" onclick="openModal('驳回')">驳回</button>
+          <button class="btn btn-sm" onclick="openModal('修改')">修改</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="fw-600">付款节点 <span class="text-sm text-2">(Contract.payment_milestones)</span></td>
+        <td>5 期：15% / 20% / 25% / 20% / 20%</td>
+        <td><span class="badge badge-green">90%</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="alert('跳转原文 D1-v1-3.2')">D1-v1-3.2</button></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="alert('已确认')">确认</button>
+          <button class="btn btn-sm" onclick="openModal('驳回')">驳回</button>
+          <button class="btn btn-sm" onclick="openModal('修改')">修改</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="fw-600">付款前提条件 <span class="text-sm text-2">(Contract.payment_precondition)</span></td>
+        <td>需求规格说明书签字确认</td>
+        <td><span class="badge badge-amber">78%</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="alert('跳转原文 D1-v1-3.2')">D1-v1-3.2</button></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="alert('已确认')">确认</button>
+          <button class="btn btn-sm" onclick="openModal('驳回')">驳回</button>
+          <button class="btn btn-sm" onclick="openModal('修改')">修改</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="fw-600">SLA 响应时限 <span class="text-sm text-2">(Sla.response_time)</span></td>
+        <td class="mono">30 分钟</td>
+        <td><span class="badge badge-green">95%</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="alert('跳转原文 D1-v1-12.2')">D1-v1-12.2</button></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="alert('已确认')">确认</button>
+          <button class="btn btn-sm" onclick="openModal('驳回')">驳回</button>
+          <button class="btn btn-sm" onclick="openModal('修改')">修改</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="fw-600">范围外事项 <span class="text-sm text-2">(Contract.excluded_items)</span></td>
+        <td>5 项：数据库迁移 / 旧数据清洗 / 第三方适配…</td>
+        <td><span class="badge badge-amber">72%</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="alert('跳转原文 D1-v1-4.3')">D1-v1-4.3</button></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="alert('已确认')">确认</button>
+          <button class="btn btn-sm" onclick="openModal('驳回')">驳回</button>
+          <button class="btn btn-sm" onclick="openModal('修改')">修改</button>
+        </td>
+      </tr>
+      <tr>
+        <td class="fw-600">功能承诺 <span class="text-sm text-2">(Contract.scope_text)</span></td>
+        <td>P2 为尽力交付（含模糊用词「尽力」）</td>
+        <td><span class="badge badge-amber">65%</span></td>
+        <td><button class="btn btn-sm btn-ghost" onclick="alert('跳转原文 D1-v1-4.2')">D1-v1-4.2</button></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="alert('已确认')">确认</button>
+          <button class="btn btn-sm" onclick="openModal('驳回')">驳回</button>
+          <button class="btn btn-sm" onclick="openModal('修改')">修改</button>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 驳回 / 修改 弹窗 -->
+  <div class="modal-mask" id="modal">
+    <div class="modal">
+      <div class="modal-head">
+        <span id="modalTitle">驳回要素</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalReject" style="display:none">
+          <div class="form-row">
+            <label>驳回原因 *</label>
+            <textarea placeholder="必填：驳回原因将入库，供 Agent 学习（FR-14）"></textarea>
+          </div>
+        </div>
+        <div id="modalEdit" style="display:none">
+          <div class="form-row">
+            <label>修正值</label>
+            <input placeholder="修改后的要素值（原始值会被记录，用于误差分析）">
+          </div>
+          <div class="form-row">
+            <label>修正原因</label>
+            <textarea placeholder="可选：记录修正原因"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="closeModal();alert('已提交，要素状态已更新')">提交</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function openModal(type) {
+  document.getElementById("modal").classList.add("show");
+  if (type === "驳回") {
+    document.getElementById("modalTitle").textContent = "驳回要素（必填原因）";
+    document.getElementById("modalReject").style.display = "";
+    document.getElementById("modalEdit").style.display = "none";
+  } else {
+    document.getElementById("modalTitle").textContent = "修改后确认";
+    document.getElementById("modalReject").style.display = "none";
+    document.getElementById("modalEdit").style.display = "";
+  }
+}
+function closeModal() {
+  document.getElementById("modal").classList.remove("show");
+}
+</script>
+</body>
+</html>

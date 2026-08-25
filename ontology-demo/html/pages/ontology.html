@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>本体建模</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>本体建模</h1>
+      <div class="subtitle">Agent 的知识基座（FR-04 ~ FR-07 / FR-46，US-08）——你调整 Agent 理解业务的概念和关系，变更走"草案 → 审核 → 发布 → 回滚"</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('新增本体类（FR-05）：名称/描述/属性列表/关系列表')">+ 新增类</button>
+      <button class="btn" onclick="alert('提交审核（FR-07）：草案变更提交 → 审核通过后发布生成版本快照')">提交审核</button>
+    </div>
+  </div>
+
+  <div class="banner banner-amber">
+    <b>待办</b>
+    <span>当前有 <b>2 个草案变更</b> 未审核（FR-07 / G04：发布本体前必须完成草案审核）。<button class="btn btn-sm" onclick="alert('发布本体被闸门拦截（G04）：存在未审核的草案变更 → 提示先完成草案审核')">尝试发布</button></span>
+  </div>
+
+  <!-- 本体统计 -->
+  <div class="grid grid-4 mb-16">
+    <div class="stat-card stat-blue"><div class="label">核心类</div><div class="value">15</div><div class="sub">Project / Contract / Milestone…</div></div>
+    <div class="stat-card"><div class="label">支撑类</div><div class="value">4</div><div class="sub">Warranty / Sla / …</div></div>
+    <div class="stat-card"><div class="label">关系</div><div class="value">16</div><div class="sub">affects / has / depends_on…</div></div>
+    <div class="stat-card"><div class="label">属性</div><div class="value">18</div><div class="sub">scope_text / response_time…</div></div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- 类列表 -->
+    <div class="card">
+      <div class="card-title">类列表 <span class="hint">点击查看类详情（属性/关系）（FR-04）</span></div>
+      <table>
+        <tr><th>类名</th><th>说明</th><th>状态</th></tr>
+        <tr>
+          <td class="fw-600">Project</td>
+          <td class="text-sm text-2">项目基本信息（名称/客户/周期/状态）</td>
+          <td><span class="badge badge-green">已发布</span></td>
+        </tr>
+        <tr>
+          <td class="fw-600">Contract</td>
+          <td class="text-sm text-2">交付范围、付款节点、验收条款、范围外事项</td>
+          <td><span class="badge badge-green">已发布</span></td>
+        </tr>
+        <tr>
+          <td class="fw-600">Milestone</td>
+          <td class="text-sm text-2">里程碑（名称/计划/实际/延期）</td>
+          <td><span class="badge badge-green">已发布</span></td>
+        </tr>
+        <tr>
+          <td class="fw-600">Risk</td>
+          <td class="text-sm text-2">风险（类型/等级/概率/影响/状态）</td>
+          <td><span class="badge badge-green">已发布</span></td>
+        </tr>
+        <tr>
+          <td class="fw-600">外包风险 <span class="text-sm text-2">(新)</span></td>
+          <td class="text-sm text-2">外包商履约风险（用户新增示例，FR-05）</td>
+          <td><span class="badge badge-amber">草案</span></td>
+        </tr>
+        <tr>
+          <td class="fw-600">Sla</td>
+          <td class="text-sm text-2">SLA 配置（响应时限/解决时限/违约条款）</td>
+          <td><span class="badge badge-green">已发布</span></td>
+        </tr>
+        <tr>
+          <td class="text-2">…（其余 12 个类）</td><td></td><td></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 类详情 + 发布流 -->
+    <div class="card">
+      <div class="card-title">类详情 · Contract <span class="hint">属性与关系（FR-05/06）</span></div>
+      <div class="form-row"><label>名称</label><span>Contract</span></div>
+      <div class="form-row"><label>描述</label><span>合同：交付范围、付款节点、验收条款、范围外事项</span></div>
+      <div class="form-row"><label>属性（数据属性）</label><span class="text-sm">scope_text / payment_milestones / has_acceptance_clause / excluded_items / contract_no / party_a / party_b</span></div>
+      <div class="form-row"><label>关系（对象属性）</label><span class="text-sm">has_milestone → Milestone · defines_sla → Sla · binds_to → Project</span></div>
+      <div class="form-row"><label>模板联动提示</label><span class="text-sm text-2">修改类可能影响合同模板（FR-08，P1：仅提示不自动改）</span></div>
+
+      <div class="card-title mt-16">本体版本快照（FR-46 / FR-07）</div>
+      <table>
+        <tr><th>版本</th><th>时间</th><th>变更内容</th><th>操作</th></tr>
+        <tr>
+          <td class="mono">v2（当前）</td>
+          <td class="text-sm">2026-08-24</td>
+          <td class="text-sm">新增类「外包风险」草案</td>
+          <td><span class="badge badge-amber">审核中</span></td>
+        </tr>
+        <tr>
+          <td class="mono">v1</td>
+          <td class="text-sm">2026-08-01</td>
+          <td class="text-sm">初始发布：15 类 + 16 关系 + 18 属性</td>
+          <td><button class="btn btn-sm" onclick="alert('回滚到 v1（FR-46）：发布快照恢复，v2 变更撤销')">回滚</button></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

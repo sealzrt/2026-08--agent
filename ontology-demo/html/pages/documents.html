@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>文档中心</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>文档中心</h1>
+      <div class="subtitle">你把项目资料交给 Agent，Agent 解析为带编号的文本块（FR-09 ~ FR-13，US-01）——这是 Agent 感知的入口</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('已对当前文档触发抽取（FR-13）：调用模板引擎，产出要素候选')">触发抽取</button>
+      <button class="btn" onclick="alert('重新解析当前文档（生成新版本，历史版本可对比 FR-11）')">重新解析</button>
+    </div>
+  </div>
+
+  <!-- 上传区 -->
+  <div class="upload-zone" onclick="alert('支持 PDF / Word(docx) / Excel(xlsx)，单文件 ≤ 50MB（FR-09）。演示中请直接使用下方示例文档。')">
+    <div class="big">⇪</div>
+    <div><b>点击或拖拽上传文档</b></div>
+    <div class="text-sm mt-8">支持：合同内容 / 项目范围 / 功能清单 / 产品原型 / 技术方案（五类文档）</div>
+    <div class="text-sm mt-8">PDF / Word(docx) / Excel(xlsx) · 单文件 ≤ 50MB</div>
+  </div>
+
+  <!-- 文档列表 -->
+  <div class="card">
+    <div class="card-title">文档列表 <span class="hint">共 1 份文档 · 1 个版本</span></div>
+    <table>
+      <tr>
+        <th>文档名称</th>
+        <th>类型</th>
+        <th>版本</th>
+        <th>解析状态</th>
+        <th>文本块</th>
+        <th>操作</th>
+      </tr>
+      <tr>
+        <td class="fw-600">软件开发合同.pdf</td>
+        <td><span class="badge badge-blue">合同</span></td>
+        <td><span class="badge badge-outline">v1</span></td>
+        <td><span class="badge badge-green">已解析</span></td>
+        <td>43</td>
+        <td>
+          <button class="btn btn-sm" onclick="alert('查看原文（FR-10）：跳转到合同 PDF 对应页')">查看原文</button>
+          <button class="btn btn-sm" onclick="alert('版本对比（FR-11）：上传新版本后此处可对比差异')">版本对比</button>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 文本块展示 -->
+  <div class="card">
+    <div class="card-title">解析结果 · 文本块 <span class="hint">点击展开/折叠（FR-12）· 编号格式：文档ID-版本-段落号</span></div>
+
+    <div class="block open">
+      <div class="block-head">
+        <span class="block-id">D1-v1-3.2</span>
+        <span>付款以《需求规格说明书》签字为前提</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="block-body">
+        3.2 付款节点：本合同项下各期付款以需求规格说明书（SRS）双方签字确认为前提……第一期 15%、第二期 20%……
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-head">
+        <span class="block-id">D1-v1-4.2</span>
+        <span>P2 为尽力交付</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="block-body">
+        4.2 功能承诺：P0/P1 功能为必须交付，P2 为尽力交付（以资源可用为前提）……
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-head">
+        <span class="block-id">D1-v1-4.3</span>
+        <span>范围外事项 5 项</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="block-body">
+        4.3 范围外事项：数据库迁移、旧系统数据清洗、第三方接口适配（共 5 项）……
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-head">
+        <span class="block-id">D1-v1-12.2</span>
+        <span>S1 级 30 分钟内响应</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="block-body">
+        12.2 SLA 服务标准：S1 级故障 30 分钟内响应，4 小时内解决；S2 级 2 小时内响应……
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="block-head">
+        <span class="block-id">D1-v1-8.2</span>
+        <span>变更管理流程</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="block-body">
+        8.2 变更流程：任何范围变更须提交变更申请单，经双方评审通过后纳入合同补充协议……
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

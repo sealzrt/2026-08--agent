@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>仪表盘</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>仪表盘</h1>
+      <div class="subtitle">Agent 向你呈现全部项目的风险态势（FR-42 / FR-43，US-07）—— 一眼看清哪些项目风险多、哪些风险还没处置</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('演示模式：一键加载示例数据，无需登录（FR-44）')">加载示例数据</button>
+      <button class="btn" onclick="alert('已重置回初始状态（NFR-08）')">重置演示数据</button>
+    </div>
+  </div>
+
+  <!-- 多项目总览统计卡 -->
+  <div class="grid grid-4 mb-16">
+    <div class="stat-card">
+      <div class="label">项目总数</div>
+      <div class="value stat-blue">1</div>
+      <div class="sub">覆盖售前 · 实施 · 运维质保</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">风险总数</div>
+      <div class="value">4</div>
+      <div class="sub">全部来自 Agent 规则推理</div>
+    </div>
+    <div class="stat-card stat-red">
+      <div class="label">高等级风险</div>
+      <div class="value">1</div>
+      <div class="sub">SLA 响应资源不足</div>
+    </div>
+    <div class="stat-card stat-amber">
+      <div class="label">中等级风险</div>
+      <div class="value">2</div>
+      <div class="sub">功能承诺模糊 · 付款依赖外部</div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- 项目风险卡片 -->
+    <div class="card">
+      <div class="card-title">项目风险态势 <span class="hint">点击卡片进入项目（FR-43）</span></div>
+      <div class="risk-card level-mid" style="cursor:pointer" onclick="parent.document.getElementById('frame').src='workspace.html'">
+        <div class="risk-title">摸鱼智慧供应链管理平台 <span class="badge badge-blue">实施阶段</span></div>
+        <div class="risk-meta">
+          <span>客户：摸鱼科技</span>
+          <span>合同：HT-2026-DEV-0823</span>
+          <span>风险 4 个</span>
+          <span>高等级 1 个</span>
+          <span>处置率 25%</span>
+        </div>
+        <div class="mt-8">
+          <span class="badge badge-red">SLA 响应资源不足</span>
+          <span class="badge badge-amber">P2 功能承诺模糊</span>
+          <span class="badge badge-amber">里程碑付款依赖外部确认</span>
+          <span class="badge badge-green">变更管理压力大</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 风险趋势 -->
+    <div class="card">
+      <div class="card-title">风险变化趋势 <span class="hint">演示数据：近 6 周风险数</span></div>
+      <div class="chart">
+        <div class="bar green-bar" style="height:25%"><span class="bar-val">1</span></div>
+        <div class="bar green-bar" style="height:25%"><span class="bar-val">1</span></div>
+        <div class="bar amber-bar" style="height:50%"><span class="bar-val">2</span></div>
+        <div class="bar amber-bar" style="height:50%"><span class="bar-val">2</span></div>
+        <div class="bar red-bar" style="height:100%"><span class="bar-val">4</span></div>
+        <div class="bar red-bar" style="height:100%"><span class="bar-val">4</span></div>
+      </div>
+      <div class="chart-labels">
+        <span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span>
+      </div>
+      <div class="text-sm text-2 mt-8">最近一次 Agent 推理：识别出 4 个风险信号（命中 R02 / R03 / R05 / R04）</div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- 近期待办 -->
+    <div class="card">
+      <div class="card-title">近期待办 <span class="hint">Agent 等待你确认的事项</span></div>
+      <div class="todo-item">
+        <span class="badge badge-blue">审核</span>
+        <span class="todo-text">合同要素候选 <b>12 条</b> 待审核（确认 / 驳回 / 修改）</span>
+        <button class="btn btn-sm btn-primary" onclick="parent.document.getElementById('frame').src='audit.html'">去审核</button>
+      </div>
+      <div class="todo-item">
+        <span class="badge badge-red">风险</span>
+        <span class="todo-text"><b>1 个高风险</b> 待确认：SLA 响应资源不足</span>
+        <button class="btn btn-sm" onclick="parent.document.getElementById('frame').src='risks.html'">去处置</button>
+      </div>
+      <div class="todo-item">
+        <span class="badge badge-amber">闸门</span>
+        <span class="todo-text">MS2 进度提交被闸门拦截 <b>1 次</b>（G03：进度 < 计划且未登记延期）</span>
+        <button class="btn btn-sm" onclick="parent.document.getElementById('frame').src='risk-detail.html'">查看</button>
+      </div>
+    </div>
+
+    <!-- Agent 全链路状态 -->
+    <div class="card">
+      <div class="card-title">Agent 全链路运行状态 <span class="hint">感知 → 推理 → 行动 → 报告</span></div>
+      <table>
+        <tr><th>环节</th><th>状态</th><th>说明</th></tr>
+        <tr>
+          <td>感知（文档解析）</td>
+          <td><span class="badge badge-green">已完成</span></td>
+          <td class="text-sm text-2">《软件开发合同》v1 · 43 个文本块</td>
+        </tr>
+        <tr>
+          <td>感知（要素抽取）</td>
+          <td><span class="badge badge-amber">待审核</span></td>
+          <td class="text-sm text-2">12 条候选，置信度 60%~95%</td>
+        </tr>
+        <tr>
+          <td>推理（规则引擎）</td>
+          <td><span class="badge badge-green">已运行</span></td>
+          <td class="text-sm text-2">命中 4 条规则 → 4 个风险信号</td>
+        </tr>
+        <tr>
+          <td>行动（闸门）</td>
+          <td><span class="badge badge-green">正常</span></td>
+          <td class="text-sm text-2">G03 拦截 1 次，可申请豁免</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

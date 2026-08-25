@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>风险中心</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>风险中心</h1>
+      <div class="subtitle">Agent 的分析报告（FR-21/25/29）——每个风险都带"命中规则 + 触发字段值 + 证据段落"，你可以查看详情并处置</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('手动登记风险（FR-32）：不走 Agent 识别流水线，但会过闸门检查')">+ 手动登记风险</button>
+      <button class="btn" onclick="alert('运行规则引擎（FR-21）：对已确认要素集执行 L1-L4 推理')">运行推理</button>
+    </div>
+  </div>
+
+  <!-- 统计 -->
+  <div class="grid grid-4 mb-16">
+    <div class="stat-card">
+      <div class="label">风险总数</div>
+      <div class="value">4</div>
+      <div class="sub">命中 4 条规则</div>
+    </div>
+    <div class="stat-card stat-red">
+      <div class="label">高</div>
+      <div class="value">1</div>
+      <div class="sub">SLA 响应资源不足</div>
+    </div>
+    <div class="stat-card stat-amber">
+      <div class="label">中</div>
+      <div class="value">2</div>
+      <div class="sub">功能承诺模糊 · 付款依赖</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="label">低</div>
+      <div class="value">1</div>
+      <div class="sub">变更管理压力大</div>
+    </div>
+  </div>
+
+  <!-- 筛选栏 -->
+  <div class="card">
+    <div class="flex gap-12 items-center">
+      <span class="text-sm text-2">筛选：</span>
+      <select class="btn">
+        <option>全部状态</option><option>待确认</option><option>处置中</option><option>已缓解</option><option>已关闭</option>
+      </select>
+      <select class="btn">
+        <option>全部等级</option><option>高</option><option>中</option><option>低</option>
+      </select>
+      <span class="text-sm text-2">排序：</span>
+      <select class="btn">
+        <option>按等级</option><option>按时间</option><option>按影响</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 风险卡片列表 -->
+  <div class="card">
+    <div class="card-title">风险台账 <span class="hint">FR-29 · 状态机：待确认 → 已确认 → 处置中 → 已缓解 → 已关闭（FR-31）</span></div>
+
+    <div class="risk-card level-high">
+      <div class="risk-title">
+        SLA 响应资源不足
+        <span class="badge badge-red">高</span>
+        <span class="badge badge-amber">概率 高</span>
+        <span class="badge badge-amber">影响 高</span>
+        <span class="badge badge-outline">待确认</span>
+        <span class="badge badge-gray">运维资源风险</span>
+      </div>
+      <div class="risk-meta">
+        <span>触发规则：R05</span>
+        <span>触发字段：sla.response_time = 30 分钟 ≤ 120</span>
+        <span>来源：合同解析</span>
+        <span>命中时间：2026-08-24 14:30</span>
+      </div>
+      <div class="risk-evidence">
+        证据段落 D1-v1-12.2：「S1 级 30 分钟内响应，4 小时内解决」→ 承诺越短，运维压力越大（R05 推导）
+      </div>
+      <div class="risk-actions">
+        <button class="btn btn-sm btn-primary" onclick="parent.document.getElementById('frame').src='risk-detail.html'">查看详情 / 决策链</button>
+        <button class="btn btn-sm" onclick="alert('确认风险（FR-31）：待确认 → 已确认，自动记录决策五要素')">确认</button>
+        <button class="btn btn-sm" onclick="alert('驳回风险（FR-31）：待确认 → 已忽略，需记录原因')">忽略</button>
+      </div>
+    </div>
+
+    <div class="risk-card level-mid">
+      <div class="risk-title">
+        P2 功能承诺模糊
+        <span class="badge badge-amber">中</span>
+        <span class="badge badge-blue">概率 中</span>
+        <span class="badge badge-blue">影响 中</span>
+        <span class="badge badge-outline">待确认</span>
+        <span class="badge badge-gray">范围模糊风险</span>
+      </div>
+      <div class="risk-meta">
+        <span>触发规则：R02</span>
+        <span>触发字段：scope_text 含模糊用词「尽力」</span>
+        <span>来源：合同解析</span>
+      </div>
+      <div class="risk-evidence">
+        证据段落 D1-v1-4.2：「P2 为尽力交付（以资源可用为前提）」→ 范围描述含"尽力"等模糊用词
+      </div>
+      <div class="risk-actions">
+        <button class="btn btn-sm btn-primary" onclick="parent.document.getElementById('frame').src='risk-detail.html'">查看详情 / 决策链</button>
+        <button class="btn btn-sm" onclick="alert('确认风险')">确认</button>
+      </div>
+    </div>
+
+    <div class="risk-card level-mid">
+      <div class="risk-title">
+        里程碑付款依赖外部确认
+        <span class="badge badge-amber">中</span>
+        <span class="badge badge-blue">概率 中</span>
+        <span class="badge badge-blue">影响 中</span>
+        <span class="badge badge-outline">待确认</span>
+        <span class="badge badge-gray">里程碑依赖风险</span>
+      </div>
+      <div class="risk-meta">
+        <span>触发规则：R03</span>
+        <span>触发字段：payment_precondition = 需求规格说明书签字</span>
+        <span>来源：合同解析</span>
+      </div>
+      <div class="risk-evidence">
+        证据段落 D1-v1-3.2：「付款以《需求规格说明书》签字为前提」→ 付款依赖外部确认
+      </div>
+      <div class="risk-actions">
+        <button class="btn btn-sm btn-primary" onclick="parent.document.getElementById('frame').src='risk-detail.html'">查看详情 / 决策链</button>
+        <button class="btn btn-sm" onclick="alert('确认风险')">确认</button>
+      </div>
+    </div>
+
+    <div class="risk-card level-low">
+      <div class="risk-title">
+        变更管理压力大
+        <span class="badge badge-green">低</span>
+        <span class="badge badge-blue">概率 低</span>
+        <span class="badge badge-blue">影响 中</span>
+        <span class="badge badge-green">已确认</span>
+        <span class="badge badge-gray">变更管理风险</span>
+      </div>
+      <div class="risk-meta">
+        <span>触发规则：R04</span>
+        <span>触发字段：excluded_items 数量 = 5 ≥ 5</span>
+        <span>来源：合同解析</span>
+      </div>
+      <div class="risk-evidence">
+        证据段落 D1-v1-4.3 + D1-v1-8.2：「范围外事项 5 项 + 变更流程」→ 范围外事项达阈值
+      </div>
+      <div class="risk-actions">
+        <button class="btn btn-sm btn-primary" onclick="parent.document.getElementById('frame').src='risk-detail.html'">查看详情 / 决策链</button>
+        <button class="btn btn-sm" onclick="alert('指派负责人 + 填写缓解措施（FR-34）')">处置</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

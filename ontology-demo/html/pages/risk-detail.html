@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>风险详情 · 决策链</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>风险详情 · 决策链</h1>
+      <div class="subtitle">每个风险从发现到关闭都有完整档案（FR-30/36/37 · US-03、US-04、US-06）——决策链可回放：段落 → 要素 → 规则 → 风险 → 处置</div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="parent.document.getElementById('frame').src='risks.html'">返回台账</button>
+    </div>
+  </div>
+
+  <!-- 基本信息 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="flex gap-8 items-center">
+        SLA 响应资源不足
+        <span class="badge badge-red">高</span>
+        <span class="badge badge-amber">概率 高</span>
+        <span class="badge badge-amber">影响 高</span>
+        <span class="badge badge-outline">待确认</span>
+      </span>
+      <span class="hint">等级 = f(概率 × 影响)，矩阵实时重算（FR-33）</span>
+    </div>
+    <div class="grid grid-3">
+      <div class="stat-card">
+        <div class="label">概率（可调）</div>
+        <div class="value stat-amber" style="font-size:20px">高</div>
+        <div class="sub">调整为中 → 等级重算为中</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">影响（可调）</div>
+        <div class="value stat-amber" style="font-size:20px">高</div>
+        <div class="sub">调整为低 → 等级重算为黄</div>
+      </div>
+      <div class="stat-card stat-red">
+        <div class="label">当前等级</div>
+        <div class="value" style="font-size:20px;color:var(--red)">高（红）</div>
+        <div class="sub">初始等级来自规则 R05 预设</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 闸门拦截演示 -->
+  <div class="banner banner-red">
+    <b>闸门拦截（G01，US-05）</b>
+    <span>Agent 检测到动作「关闭风险」：等级 = 高 且 缓解措施为空 → 拦截。提示："先填写缓解措施"（FR-26 / A04）。<button class="btn btn-sm mt-8" onclick="alert('申请豁免（FR-28，P1）：记录豁免人与理由，不自动放行')">申请豁免（P1）</button></span>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- 证据与规则 -->
+    <div class="card">
+      <div class="card-title">证据与命中规则 <span class="hint">Agent 解释"为什么认为这是风险"（FR-25/27）</span></div>
+
+      <div class="fw-600" style="font-size:13.5px">证据段落</div>
+      <div class="risk-evidence" style="margin-top:6px">
+        <b class="mono">D1-v1-12.2</b>：「S1 级 30 分钟内响应，4 小时内解决；S2 级 2 小时内响应」<br>
+        <button class="btn btn-sm btn-ghost mt-8" onclick="alert('跳转合同原文第 12 章（FR-30 / A02）')">跳转原文</button>
+      </div>
+
+      <div class="fw-600 mt-16" style="font-size:13.5px">命中规则</div>
+      <div class="mt-8">
+        <div class="block open">
+          <div class="block-head">
+            <span class="block-id">R05</span>
+            <span>SLA 响应资源不足</span>
+            <span class="arrow">▶</span>
+          </div>
+          <div class="block-body">
+            <div class="form-row"><label>检查逻辑</label><span>sla.response_time ≤ 120（分钟）</span></div>
+            <div class="form-row"><label>触发字段值</label><span class="mono">sla.response_time = 30</span></div>
+            <div class="form-row"><label>推导说明</label><span>承诺越短 → 运维压力越大</span></div>
+            <div class="form-row"><label>初始等级</label><span><span class="badge badge-red">高</span>（用户可调概率/影响后按矩阵重算）</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 处置记录时间线 -->
+    <div class="card">
+      <div class="card-title">处置记录 · 决策链回放 <span class="hint">五要素：决策人 + 时间 + 依据 + 内容 + 结果（FR-36/37）</span></div>
+      <div class="timeline">
+        <div class="tl-item tl-gray">
+          <div class="tl-title">Agent 感知文档</div>
+          <div class="tl-time">2026-08-24 14:20</div>
+          <div class="tl-desc">解析《软件开发合同》v1，生成 43 个文本块</div>
+        </div>
+        <div class="tl-item tl-gray">
+          <div class="tl-title">Agent 抽取要素</div>
+          <div class="tl-time">2026-08-24 14:25</div>
+          <div class="tl-desc">合同模板 ContractExtractor 抽取「SLA 响应时限 = 30 分钟」（置信度 95%）</div>
+          <div class="tl-evidence">要素来源：D1-v1-12.2</div>
+        </div>
+        <div class="tl-item tl-gray">
+          <div class="tl-title">用户审核确认</div>
+          <div class="tl-time">2026-08-24 14:28 · 决策人：PM 张伟</div>
+          <div class="tl-desc">确认要素「SLA 响应时限 = 30 分钟」</div>
+        </div>
+        <div class="tl-item tl-red">
+          <div class="tl-title">Agent 推理命中规则 R05</div>
+          <div class="tl-time">2026-08-24 14:30</div>
+          <div class="tl-desc">30 ≤ 120 → 生成风险信号「运维资源风险 · 高」</div>
+          <div class="tl-evidence">证据：D1-v1-12.2 · 规则：R05</div>
+        </div>
+        <div class="tl-item tl-amber">
+          <div class="tl-title">风险待确认（当前状态）</div>
+          <div class="tl-time">2026-08-24 14:30</div>
+          <div class="tl-desc">Agent 提交风险分析报告，等待 PM 确认或驳回</div>
+        </div>
+      </div>
+
+      <div class="flex gap-8 mt-16">
+        <button class="btn btn-sm btn-primary" onclick="alert('确认风险：待确认 → 已确认，自动记录决策五要素（FR-36）')">确认风险</button>
+        <button class="btn btn-sm" onclick="alert('指派负责人 + 填写缓解措施（FR-34）——注意：缓解措施为空时关闭会被 G01 拦截')">指派处置</button>
+        <button class="btn btn-sm" onclick="alert('关闭风险（G01 演示）：等级=高 且 缓解措施为空 → 被拦截，见上方红色横幅')">尝试关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 关联关系（P1） -->
+  <div class="card">
+    <div class="card-title">关联关系 <span class="hint">FR-35（P1）· 风险通过本体关系关联到里程碑/需求/进度/运维事件 · MVP 中仅来自种子数据预置或自动识别，手动关联界面为 P1</span></div>
+    <table>
+      <tr><th>关联类型</th><th>对象</th><th>关联说明</th></tr>
+      <tr><td>里程碑</td><td class="mono">MS3 开发</td><td class="text-sm">SLA 承诺影响开发期运维资源投入（≥2 个里程碑关联时触发 R10 联动升级）</td></tr>
+      <tr><td>需求</td><td class="mono">REQ-005</td><td class="text-sm">运维响应能力需求</td></tr>
+      <tr><td>进度</td><td class="mono">MS2 进度 70%</td><td class="text-sm">方案设计延期 2 天，压缩了运维准备时间</td></tr>
+      <tr><td>运维事件</td><td class="mono">WT-001</td><td class="text-sm">历史事件佐证 SLA 压力（来源：运维工单）</td></tr>
+    </table>
+    <div class="text-sm text-2 mt-8">手动新增关联入口（P1 预留）：<button class="btn btn-sm mt-4" onclick="alert('手动关联（FR-35，P1）：选择对象类型 + 对象，创建本体关系')">+ 关联对象（P1）</button></div>
+  </div>
+
+</div>
+</body>
+</html>

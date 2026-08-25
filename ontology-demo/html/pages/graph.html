@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>关系图谱</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  /* 连线用 SVG 画布替代 CSS 线条，更接近真实图谱 */
+  .graph-svg { position: relative; }
+  .graph-svg svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .graph-svg svg line { stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 4 3; }
+</style>
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>关系图谱</h1>
+      <div class="subtitle">项目全链路知识图谱（FR-47）——风险 - 里程碑 - 需求 - 文档之间的关系可视化，点击节点跳转详情</div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="alert('切换视图：按风险 / 按里程碑 / 按文档（FR-47）')">切换视图</button>
+      <button class="btn" onclick="alert('布局：力导向 / 环形 / 分层（FR-47）')">布局</button>
+    </div>
+  </div>
+
+  <!-- 简易图谱：用 CSS 绝对定位 + SVG 连线 -->
+  <div class="card">
+    <div class="card-title">项目知识图谱 <span class="hint">连线 = 本体关系（risk-affects-milestone / milestone-has-requirement 等 16 条关系）</span></div>
+    <div class="graph-svg">
+      <svg viewBox="0 0 1000 460" preserveAspectRatio="none">
+        <line x1="500" y1="90"  x2="500" y2="230" />
+        <line x1="500" y1="90"  x2="190" y2="200" />
+        <line x1="500" y1="90"  x2="830" y2="210" />
+        <line x1="190" y1="200" x2="190" y2="370" />
+        <line x1="830" y1="210" x2="830" y2="380" />
+        <line x1="500" y1="230" x2="190" y2="370" />
+        <line x1="500" y1="230" x2="830" y2="380" />
+        <line x1="500" y1="230" x2="500" y2="390" />
+        <line x1="330" y1="120" x2="190" y2="200" />
+        <line x1="670" y1="120" x2="830" y2="210" />
+      </svg>
+      <div class="graph-canvas" style="position:static;height:460px">
+        <!-- 中心：风险 -->
+        <div class="graph-node node-red" style="left:430px;top:20px;z-index:2">
+          SLA 响应资源不足<span class="g-sub">风险 · 高</span>
+        </div>
+
+        <!-- 文档 -->
+        <div class="graph-node node-blue" style="left:110px;top:130px">
+          软件开发合同<span class="g-sub">文档 D1 · 43 文本块</span>
+        </div>
+        <div class="graph-node node-blue" style="left:750px;top:140px">
+          技术方案 v1<span class="g-sub">文档 D2 · 已评审</span>
+        </div>
+
+        <!-- 里程碑 -->
+        <div class="graph-node node-green" style="left:120px;top:300px">
+          MS1 需求分析<span class="g-sub">已完成</span>
+        </div>
+        <div class="graph-node node-amber" style="left:740px;top:310px">
+          MS2 方案设计<span class="g-sub">延期 2 天</span>
+        </div>
+        <div class="graph-node node-gray" style="left:430px;top:320px">
+          MS3 开发<span class="g-sub">未开始</span>
+        </div>
+
+        <!-- 需求 -->
+        <div class="graph-node node-gray" style="left:240px;top:60px">
+          REQ-001~005<span class="g-sub">需求 · 1 条未确认</span>
+        </div>
+        <div class="graph-node node-amber" style="left:610px;top:50px">
+          REQ-004<span class="g-sub">变更 4 次 · 未确认</span>
+        </div>
+      </div>
+    </div>
+    <div class="text-sm text-2 mt-8">图例：<span class="badge badge-red">风险</span> <span class="badge badge-blue">文档</span> <span class="badge badge-green">里程碑</span> <span class="badge badge-amber">待处理</span> — 虚线 = 本体关系</div>
+  </div>
+
+  <!-- 关系说明 -->
+  <div class="card">
+    <div class="card-title">图谱中的本体关系 <span class="hint">知识基座 · 16 条关系的一部分</span></div>
+    <table>
+      <tr><th>源节点</th><th>关系</th><th>目标节点</th><th>含义</th></tr>
+      <tr><td>风险</td><td class="mono">affects</td><td>里程碑</td><td>SLA 风险影响 MS2 方案设计交付</td></tr>
+      <tr><td>文档</td><td class="mono">extracts_to</td><td>要素</td><td>合同 D1-v1-12.2 → SLA 响应时限要素</td></tr>
+      <tr><td>里程碑</td><td class="mono">has</td><td>需求</td><td>MS1 挂接 REQ-001~005</td></tr>
+      <tr><td>里程碑</td><td class="mono">depends_on</td><td>里程碑</td><td>MS2 依赖 MS1 完成</td></tr>
+      <tr><td>需求</td><td class="mono">implements</td><td>方案</td><td>技术方案 @implements REQ-001/002</td></tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

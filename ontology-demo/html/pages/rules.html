@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>规则管理</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>规则管理</h1>
+      <div class="subtitle">Agent 的推理规则（FR-20/22/23/24）——10 条预置规则随 Agent 安装提供，可启停，命中次数自动统计</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('新增规则（FR-23，P1）：规则 DSL 编写 + 语法校验')">+ 新增规则（P1）</button>
+    </div>
+  </div>
+
+  <div class="banner banner-blue">
+    <b>说明</b>
+    <span>规则预设等级 = 初始等级；用户调整概率/影响后按 3×3 矩阵实时重算（FR-33）；R10 联动升级在矩阵重算后生效。</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">预置规则列表 <span class="hint">FR-20/22 · 命中次数来自推理运行记录 · 启用列可开关（FR-24）</span></div>
+    <table>
+      <tr>
+        <th>编号</th>
+        <th>规则名</th>
+        <th>检查逻辑</th>
+        <th>生成风险</th>
+        <th>初始等级</th>
+        <th>命中</th>
+        <th>启用</th>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R01</td>
+        <td>验收标准缺失</td>
+        <td class="text-sm text-2 mono">contract.has_acceptance_clause == false</td>
+        <td>验收风险</td>
+        <td><span class="badge badge-red">高</span></td>
+        <td>0</td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R02</td>
+        <td>范围描述模糊</td>
+        <td class="text-sm text-2 mono">scope_text 含 尽力/酌情/视情况/尽可能</td>
+        <td>范围模糊风险</td>
+        <td><span class="badge badge-amber">中</span></td>
+        <td><b>1</b></td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R03</td>
+        <td>付款依赖外部签字</td>
+        <td class="text-sm text-2 mono">payment_precondition 含外部确认</td>
+        <td>里程碑依赖风险</td>
+        <td><span class="badge badge-amber">中</span></td>
+        <td><b>1</b></td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R04</td>
+        <td>变更管理压力大</td>
+        <td class="text-sm text-2 mono">excluded_items.count() >= 5</td>
+        <td>变更管理风险</td>
+        <td><span class="badge badge-green">低</span></td>
+        <td><b>1</b></td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr style="background:#f0f9ff">
+        <td class="mono fw-600">R05</td>
+        <td>SLA 响应资源不足</td>
+        <td class="text-sm text-2 mono">sla.response_time <= 120</td>
+        <td>运维资源风险</td>
+        <td><span class="badge badge-red">高</span></td>
+        <td><b>1</b></td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R06</td>
+        <td>需求蔓延</td>
+        <td class="text-sm text-2 mono">req.change_count > 3 && !req.is_confirmed</td>
+        <td>范围蔓延风险</td>
+        <td><span class="badge badge-red">高</span></td>
+        <td>0</td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R07</td>
+        <td>功能清单过大</td>
+        <td class="text-sm text-2 mono">feature.count > 50 && 无优先级</td>
+        <td>交付质量风险</td>
+        <td><span class="badge badge-amber">中</span></td>
+        <td>0</td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R08</td>
+        <td>方案未评审</td>
+        <td class="text-sm text-2 mono">solution.review_status != 已评审</td>
+        <td>实施延期风险</td>
+        <td><span class="badge badge-amber">中</span></td>
+        <td>0</td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R09</td>
+        <td>里程碑延期</td>
+        <td class="text-sm text-2 mono">milestone.delay_days > 7</td>
+        <td>里程碑延期风险</td>
+        <td><span class="badge badge-red">高</span></td>
+        <td>0</td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+      <tr>
+        <td class="mono fw-600">R10</td>
+        <td>联动升级</td>
+        <td class="text-sm text-2 mono">risk.affected_milestones >= 2 → 等级+1</td>
+        <td>原风险上调</td>
+        <td><span class="badge badge-gray">—</span></td>
+        <td>0</td>
+        <td><span class="switch on" onclick="this.classList.toggle('on')"></span></td>
+      </tr>
+    </table>
+    <div class="text-sm text-2 mt-8">
+      R10 说明：MVP 中风险-里程碑关联仅来自种子数据预置，示例数据不预置多里程碑关联，R10 不参与示例验收（见需求 7.1）。
+    </div>
+  </div>
+
+  <!-- 闸门规则 -->
+  <div class="card">
+    <div class="card-title">闸门规则（4 条）<span class="hint">Agent 关键动作前的自我检查（FR-26）</span></div>
+    <table>
+      <tr><th>编号</th><th>关键动作</th><th>拦截条件</th><th>提示</th></tr>
+      <tr><td class="mono fw-600">G01</td><td>关闭风险</td><td class="text-sm text-2">等级=高 且 缓解措施为空</td><td>"先填写缓解措施"</td></tr>
+      <tr><td class="mono fw-600">G02</td><td>确认里程碑完成</td><td class="text-sm text-2">存在未处置的高等级风险影响该里程碑</td><td>"先处置影响风险"</td></tr>
+      <tr><td class="mono fw-600">G03</td><td>提交进度</td><td class="text-sm text-2">实际进度 < 计划 且 未登记延期风险</td><td>"先登记延期风险"</td></tr>
+      <tr><td class="mono fw-600">G04</td><td>发布本体</td><td class="text-sm text-2">存在未审核的本体草案变更</td><td>"先完成草案审核"</td></tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

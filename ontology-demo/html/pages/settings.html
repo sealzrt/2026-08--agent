@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>系统设置</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>系统设置</h1>
+      <div class="subtitle">LLM 配置（FR-45）、演示模式（FR-44）、审计日志（FR-38）等基础设置</div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- LLM 配置 -->
+    <div class="card">
+      <div class="card-title">LLM 配置 <span class="hint">FR-45 · 默认关闭，LLM 增强抽取的前置条件（P1）</span></div>
+      <div class="banner banner-blue">
+        <b>当前状态</b>
+        <span>LLM 抽取 <b>关闭</b>（演示模式无外部网络依赖，NFR-04）。核心流程走规则式抽取兜底。</span>
+      </div>
+      <div class="form-row">
+        <label>启用 LLM 抽取</label>
+        <span class="switch" onclick="this.classList.toggle('on')"></span>
+      </div>
+      <div class="form-row">
+        <label>API Base URL</label>
+        <input value="https://api.openai.com/v1" disabled>
+      </div>
+      <div class="form-row">
+        <label>API Key</label>
+        <input type="password" placeholder="sk-..." disabled>
+      </div>
+      <div class="form-row">
+        <label>模型</label>
+        <select disabled><option>gpt-4o-mini</option><option>deepseek-chat</option><option>ollama/qwen2.5</option></select>
+      </div>
+      <div class="text-sm text-2">兼容 OpenAI / DeepSeek / Ollama（FR-45）。启用后文档内容将发送至所配置的模型服务（NFR-04）。</div>
+    </div>
+
+    <!-- 演示模式 -->
+    <div class="card">
+      <div class="card-title">演示模式 <span class="hint">FR-44 / NFR-08 · 一键加载示例数据，可重置</span></div>
+      <div class="banner banner-green">
+        <b>示例数据已加载</b>
+        <span>《软件开发合同》演示数据集（1 项目 / 43 文本块 / 12 要素候选 / 4 风险）</span>
+      </div>
+      <div class="flex gap-8 mt-8">
+        <button class="btn btn-primary" onclick="alert('一键加载示例数据（FR-44）：无需登录直接体验 Agent 全链路')">加载示例数据</button>
+        <button class="btn" onclick="alert('重置回初始状态（NFR-08）：清除所有演示数据')">重置演示数据</button>
+        <button class="btn" onclick="alert('种子数据可重置（NFR-07）')">恢复种子数据</button>
+      </div>
+      <div class="text-sm text-2 mt-16">示例数据内容（需求 9.1）：</div>
+      <ul class="text-sm text-2" style="margin-left:20px;margin-top:6px;line-height:2">
+        <li>项目：摸鱼智慧供应链管理平台（1 个）</li>
+        <li>合同 HT-2026-DEV-0823：5 期付款 / 范围外 5 项 / SLA 30 分钟 / 质保 12 个月</li>
+        <li>里程碑 MS1~MS8；进度 MS1 完成、MS2 延期 2 天</li>
+        <li>需求 5 条（含未确认项供 R06 检查）；技术方案 1 份（已评审）</li>
+        <li>运维事件 2 条（SLA 状态：正常）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- 审计日志 -->
+    <div class="card">
+      <div class="card-title">操作留痕 <span class="hint">FR-38 · Agent 关键操作审计日志</span></div>
+      <table>
+        <tr><th>时间</th><th>操作人</th><th>动作</th><th>对象</th></tr>
+        <tr><td class="mono text-sm">08-24 14:30</td><td>Agent</td><td class="text-sm">规则推理运行</td><td class="text-sm">合同要素集（命中 R02/R03/R05/R04）</td></tr>
+        <tr><td class="mono text-sm">08-24 14:28</td><td>张伟（PM）</td><td class="text-sm">要素确认</td><td class="text-sm">SLA 响应时限 = 30 分钟</td></tr>
+        <tr><td class="mono text-sm">08-24 14:25</td><td>Agent</td><td class="text-sm">模板抽取</td><td class="text-sm">ContractExtractor · 12 条候选</td></tr>
+        <tr><td class="mono text-sm">08-24 14:20</td><td>Agent</td><td class="text-sm">文档解析</td><td class="text-sm">《软件开发合同》v1 · 43 文本块</td></tr>
+        <tr><td class="mono text-sm">08-01 10:00</td><td>系统</td><td class="text-sm">本体发布</td><td class="text-sm">本体 v1（15 类 + 16 关系 + 18 属性）</td></tr>
+      </table>
+    </div>
+
+    <!-- 关于 -->
+    <div class="card">
+      <div class="card-title">关于</div>
+      <div class="form-row"><label>产品</label><span>项目风险管控 Agent（本体驱动）</span></div>
+      <div class="form-row"><label>版本</label><span>MVP · 原型 v0.1</span></div>
+      <div class="form-row"><label>部署方式</label><span>单机一条命令启动（NFR-01），数据本地存储</span></div>
+      <div class="form-row"><label>性能</label><span>单文档解析 ≤ 30s，单规则集运行 ≤ 5s（NFR-02）</span></div>
+      <div class="form-row"><label>浏览器兼容</label><span>Chrome 90+ / Edge 90+ / Firefox 90+ / Safari 15+（NFR-03）</span></div>
+      <div class="form-row"><label>许可合规</label><span>依赖全部宽松许可证（NFR-05）</span></div>
+      <div class="form-row"><label>数据安全</label><span>LLM 不落库原始对话（NFR-06）</span></div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- SLA 配置（P1） -->
+    <div class="card">
+      <div class="card-title">SLA 配置 <span class="hint">FR-54（P1）· 供 R05 推理引用</span></div>
+      <table>
+        <tr><th>级别</th><th>响应时限</th><th>解决时限</th><th>违约条款</th></tr>
+        <tr><td class="fw-600">S1</td><td class="mono text-sm">30 分钟</td><td class="mono text-sm">4 小时</td><td class="text-sm">每超 1 小时扣合同款 0.1%</td></tr>
+        <tr><td class="fw-600">S2</td><td class="mono text-sm">2 小时</td><td class="mono text-sm">8 小时</td><td class="text-sm">每超 1 小时扣合同款 0.05%</td></tr>
+      </table>
+      <div class="text-sm text-2 mt-8">SLA 响应时限是 R05（SLA 响应资源不足）的推理依据：<span class="mono">sla.response_time ≤ 120（分钟）</span>。编辑入口（P1 预留）：<button class="btn btn-sm mt-4" onclick="alert('编辑 SLA 配置（FR-54，P1）：响应时限/解决时限/违约条款')">编辑 SLA（P1）</button></div>
+    </div>
+
+    <!-- MCP 接口层（预留） -->
+    <div class="card">
+      <div class="card-title">MCP 接口层 <span class="hint">FR-48（P1，预留）· Agent 核心能力对外暴露为 MCP 工具，供其他 Agent 调用</span></div>
+      <div class="banner banner-blue">
+        <b>预留状态</b>
+        <span>MVP 内部运行，不对外开放；P1 阶段将 Agent 能力封装为 MCP 工具集。</span>
+      </div>
+      <table>
+        <tr><th>工具名</th><th>能力</th><th>输入</th></tr>
+        <tr><td class="mono fw-600">query_ontology</td><td class="text-sm">查询本体结构与实例</td><td class="text-sm mono">class / relation</td></tr>
+        <tr><td class="mono fw-600">get_risk_feed</td><td class="text-sm">获取风险台账摘要</td><td class="text-sm mono">project_id</td></tr>
+        <tr><td class="mono fw-600">create_risk</td><td class="text-sm">登记风险</td><td class="text-sm mono">risk 要素集</td></tr>
+        <tr><td class="mono fw-600">check_rule</td><td class="text-sm">规则检查</td><td class="text-sm mono">rule_id / 要素集</td></tr>
+      </table>
+      <div class="text-sm text-2 mt-8">接口定义见技术架构方案 · 第七章 MCP 预留（A07）。</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

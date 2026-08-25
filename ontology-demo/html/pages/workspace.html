@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>项目工作台</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>项目工作台</h1>
+      <div class="subtitle">单项目视角的数据总览（FR-02）——你在这里更新业务数据，Agent 读取它们作为推理上下文（FR-49~52）</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="parent.document.getElementById('frame').src='documents.html'">上传文档给 Agent</button>
+      <button class="btn" onclick="parent.document.getElementById('frame').src='risks.html'">查看风险</button>
+    </div>
+  </div>
+
+  <!-- 项目信息 -->
+  <div class="card">
+    <div class="card-title">项目信息</div>
+    <div class="grid grid-3">
+      <div class="stat-card">
+        <div class="label">项目名称</div>
+        <div class="fw-600" style="font-size:16px;margin-top:4px">摸鱼智慧供应链管理平台</div>
+        <div class="sub">客户：摸鱼科技</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">合同</div>
+        <div class="fw-600 mono" style="font-size:14px;margin-top:4px">HT-2026-DEV-0823</div>
+        <div class="sub">5 期付款 · 范围外 5 项 · SLA 30 分钟 · 质保 12 个月</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">项目周期</div>
+        <div class="fw-600" style="font-size:15px;margin-top:4px">2026-07-01 ~ 2027-06-30</div>
+        <div class="sub"><span class="badge badge-blue">实施阶段</span> <span class="badge badge-outline">演示数据</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据总览 -->
+  <div class="grid grid-4 mb-16">
+    <div class="stat-card">
+      <div class="label">需求（FR-49）</div>
+      <div class="value stat-blue">5</div>
+      <div class="sub">1 条未确认</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">里程碑（FR-51）</div>
+      <div class="value">8</div>
+      <div class="sub">MS1 完成 · MS2 进行中</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">文档（感知）</div>
+      <div class="value stat-green">1</div>
+      <div class="sub">《软件开发合同》43 文本块</div>
+    </div>
+    <div class="stat-card stat-red">
+      <div class="label">风险（推理）</div>
+      <div class="value">4</div>
+      <div class="sub">1 高 / 2 中 / 1 低</div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- 业务数据明细 -->
+    <div class="card">
+      <div class="card-title">需求清单 <span class="hint">FR-49 · R06 检查变更次数 > 3 且未确认</span></div>
+      <table>
+        <tr><th>编号</th><th>优先级</th><th>确认状态</th><th>变更次数</th></tr>
+        <tr><td class="mono">REQ-001</td><td><span class="badge badge-red">P0</span></td><td><span class="badge badge-green">已确认</span></td><td>1</td></tr>
+        <tr><td class="mono">REQ-002</td><td><span class="badge badge-amber">P1</span></td><td><span class="badge badge-green">已确认</span></td><td>2</td></tr>
+        <tr><td class="mono">REQ-003</td><td><span class="badge badge-amber">P1</span></td><td><span class="badge badge-green">已确认</span></td><td>0</td></tr>
+        <tr><td class="mono">REQ-004</td><td><span class="badge badge-blue">P2</span></td><td><span class="badge badge-amber">未确认</span></td><td>4</td></tr>
+        <tr><td class="mono">REQ-005</td><td><span class="badge badge-blue">P2</span></td><td><span class="badge badge-green">已确认</span></td><td>1</td></tr>
+      </table>
+      <div class="text-sm text-2 mt-8">提示：REQ-004 变更 4 次且未确认，满足 R06（需求蔓延）触发条件，可加入确认</div>
+      <div class="text-sm text-2 mt-8">技术方案 1 份（已评审，含新技术栈 Elasticsearch 8，FR-50）</div>
+    </div>
+
+    <!-- 里程碑与进度 -->
+    <div class="card">
+      <div class="card-title">里程碑与进度 <span class="hint">FR-51 / FR-52 · R09 检查延期 > 7 天</span></div>
+      <table>
+        <tr><th>里程碑</th><th>计划</th><th>进度</th><th>状态</th></tr>
+        <tr><td class="fw-600">MS1 需求分析</td><td class="text-sm">2026-07-15</td><td>100%</td><td><span class="badge badge-green">已完成</span></td></tr>
+        <tr>
+          <td class="fw-600">MS2 方案设计</td>
+          <td class="text-sm">2026-08-10</td>
+          <td>70%</td>
+          <td><span class="badge badge-amber">进行中 · 延期 2 天</span></td>
+        </tr>
+        <tr><td class="fw-600">MS3 开发</td><td class="text-sm">2026-10-20</td><td>0%</td><td><span class="badge badge-gray">未开始</span></td></tr>
+        <tr><td class="text-2">MS4 ~ MS8 …</td><td class="text-sm text-2">2026-11 ~ 2027-05</td><td class="text-2">—</td><td class="text-2">—</td></tr>
+      </table>
+      <div class="text-sm text-2 mt-8">提示：MS2 延期 2 天 < 7 天阈值，未触发 R09（里程碑延期）</div>
+    </div>
+
+    <!-- 运维事件（P1） -->
+    <div class="card">
+      <div class="card-title">运维事件 <span class="hint">FR-53（P1）· 运维工单 CRUD · SLA 状态供 R05 推理引用</span></div>
+      <table>
+        <tr><th>工单编号</th><th>问题描述</th><th>SLA 状态</th><th>响应 / 解决时长</th></tr>
+        <tr>
+          <td class="mono fw-600">WT-001</td>
+          <td class="text-sm">正式环境登录偶发超时</td>
+          <td><span class="badge badge-green">正常</span></td>
+          <td class="text-sm mono">18min / 2.5h</td>
+        </tr>
+        <tr>
+          <td class="mono fw-600">WT-002</td>
+          <td class="text-sm">批量导出接口响应缓慢</td>
+          <td><span class="badge badge-green">正常</span></td>
+          <td class="text-sm mono">25min / 3h</td>
+        </tr>
+      </table>
+      <div class="text-sm text-2 mt-8">SLA 配置见系统设置（FR-54，P1）；工单 CRUD 入口（P1 预留）：<button class="btn btn-sm mt-4" onclick="alert('新增运维工单（FR-53，P1）：工单编号/问题描述/SLA 状态/响应与解决时长')">+ 新建工单（P1）</button></div>
+    </div>
+  </div>
+
+  <!-- 快捷入口 -->
+  <div class="card">
+    <div class="card-title">快捷入口 <span class="hint">Agent 各环节的工作台入口</span></div>
+    <div class="flex gap-12" style="flex-wrap:wrap">
+      <button class="btn" onclick="parent.document.getElementById('frame').src='documents.html'">文档中心（感知）</button>
+      <button class="btn" onclick="parent.document.getElementById('frame').src='audit.html'">要素审核（感知/学习）</button>
+      <button class="btn" onclick="parent.document.getElementById('frame').src='risks.html'">风险中心（推理/行动）</button>
+      <button class="btn" onclick="parent.document.getElementById('frame').src='graph.html'">关系图谱（报告）</button>
+      <button class="btn" onclick="parent.document.getElementById('frame').src='consistency.html'">一致性检测（推理）</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>项目风险管控 Agent — 产品原型</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  iframe { flex: 1; border: none; width: 100%; background: #f1f5f9; }
+  .nav-group .nav-item[data-tag="p1"] { position: relative; }
+  .nav-item .p1-mark {
+    margin-left: auto;
+    font-size: 10px;
+    color: #fbbf24;
+    border: 1px solid #fbbf24;
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ========== 左侧导航 ========== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>风险管控 Agent</h1>
+      <p>本体驱动 · 全链路风险管控</p>
+    </div>
+
+    <nav id="nav">
+      <div class="nav-group">
+        <div class="nav-group-title">总览</div>
+        <div class="nav-item active" data-page="dashboard.html">
+          <span class="icon">◆</span>仪表盘
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">项目管理</div>
+        <div class="nav-item" data-page="projects.html">
+          <span class="icon">▤</span>项目列表
+        </div>
+        <div class="nav-item" data-page="workspace.html">
+          <span class="icon">▦</span>项目工作台
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Agent 感知（读文档）</div>
+        <div class="nav-item" data-page="documents.html">
+          <span class="icon">≡</span>文档中心
+        </div>
+        <div class="nav-item" data-page="audit.html">
+          <span class="icon">☑</span>要素审核
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Agent 推理与行动</div>
+        <div class="nav-item" data-page="risks.html">
+          <span class="icon">⚠</span>风险中心
+        </div>
+        <div class="nav-item" data-page="risk-detail.html">
+          <span class="icon">↻</span>风险详情 · 决策链
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Agent 报告</div>
+        <div class="nav-item" data-page="consistency.html">
+          <span class="icon">⇄</span>一致性检测
+          <span class="p1-mark">P1</span>
+        </div>
+        <div class="nav-item" data-page="graph.html">
+          <span class="icon">◉</span>关系图谱
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Agent 知识基座</div>
+        <div class="nav-item" data-page="ontology.html">
+          <span class="icon">◈</span>本体建模
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">规则与模板</div>
+        <div class="nav-item" data-page="rules.html">
+          <span class="icon">⚙</span>规则管理
+        </div>
+        <div class="nav-item" data-page="templates.html">
+          <span class="icon">▤</span>模板管理
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">系统</div>
+        <div class="nav-item" data-page="settings.html">
+          <span class="icon">⚙</span>系统设置
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      原型版本 v0.1<br>
+      基于需求规格说明书 v1.1
+    </div>
+  </aside>
+
+  <!-- ========== 主区域 ========== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">仪表盘</div>
+      <div class="topbar-right">
+        <div class="project-selector">
+          <span>当前项目:</span>
+          <select id="projectSelect">
+            <option>摸鱼智慧供应链管理平台</option>
+            <option>示例项目二（新建）</option>
+          </select>
+        </div>
+        <button class="btn" onclick="alert('演示模式：一键加载示例数据（FR-44）')">演示模式</button>
+        <button class="btn" onclick="alert('已重置回初始状态（FR-44 / NFR-08）')">重置</button>
+      </div>
+    </div>
+
+    <iframe id="frame" src="pages/dashboard.html"></iframe>
+  </div>
+</div>
+
+<script>
+  const NAV = {
+    "dashboard.html": "仪表盘",
+    "projects.html": "项目列表",
+    "workspace.html": "项目工作台",
+    "documents.html": "文档中心",
+    "audit.html": "要素审核",
+    "risks.html": "风险中心",
+    "risk-detail.html": "风险详情 · 决策链",
+    "consistency.html": "一致性检测",
+    "graph.html": "关系图谱",
+    "ontology.html": "本体建模",
+    "rules.html": "规则管理",
+    "templates.html": "模板管理",
+    "settings.html": "系统设置"
+  };
+
+  const items = document.querySelectorAll(".nav-item");
+  const frame = document.getElementById("frame");
+  const title = document.getElementById("pageTitle");
+
+  items.forEach(item => {
+    item.addEventListener("click", () => {
+      items.forEach(i => i.classList.remove("active"));
+      item.classList.add("active");
+      const page = item.dataset.page;
+      frame.src = "pages/" + page;
+      title.textContent = NAV[page] || page;
+    });
+  });
+</script>
+</body>
+</html>

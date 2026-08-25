@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>一致性检测</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>一致性检测</h1>
+      <div class="subtitle">Agent 自动对账（FR-39/40/41，P1）——比对合同付款节点 vs 计划里程碑 vs 实际进度，计算就绪度</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('运行跨源对账（FR-39，P1）')">运行对账</button>
+    </div>
+  </div>
+
+  <div class="banner banner-amber">
+    <b>P1 能力预览</b>
+    <span>对账 / 就绪度 / 编号门禁均为 P1 功能，本页展示最终形态供评审需求理解。</span>
+  </div>
+
+  <div class="grid grid-3 mb-16">
+    <div class="stat-card stat-blue">
+      <div class="label">里程碑就绪度（FR-40）</div>
+      <div class="value">68</div>
+      <div class="sub">= 需求确认率 40% × 0.6 + 方案评审率 30% × 1 + 风险处置率 30% × 0.6</div>
+      <div class="progress-bar red" style="margin-top:8px"><div style="width:68%"></div></div>
+      <div class="text-sm text-2 mt-8">低于 70 → Agent 亮黄灯</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">对账不一致项</div>
+      <div class="value stat-red">2</div>
+      <div class="sub">付款节点 vs 里程碑 vs 进度</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">编号门禁（FR-41）</div>
+      <div class="value stat-red">2</div>
+      <div class="sub">方案文档未 @implements 需求编号</div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- 跨源对账 -->
+    <div class="card">
+      <div class="card-title">跨源对账结果 <span class="hint">合同付款节点 vs 计划里程碑（FR-39）</span></div>
+      <table>
+        <tr><th>合同付款节点</th><th>对应里程碑</th><th>状态</th></tr>
+        <tr>
+          <td>第 1 期 15%（SRS 签字后）</td>
+          <td>MS1 需求分析</td>
+          <td><span class="badge badge-green">一致</span></td>
+        </tr>
+        <tr>
+          <td>第 2 期 20%（方案评审后）</td>
+          <td>MS2 方案设计</td>
+          <td><span class="badge badge-red">不一致 · MS2 延期 2 天</span></td>
+        </tr>
+        <tr>
+          <td>第 3 期 25%（上线后）</td>
+          <td>MS5 试运行</td>
+          <td><span class="badge badge-amber">待验证</span></td>
+        </tr>
+        <tr>
+          <td>第 4/5 期（验收/质保）</td>
+          <td>MS7 / MS8</td>
+          <td><span class="badge badge-amber">待验证</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 编号门禁 -->
+    <div class="card">
+      <div class="card-title">编号门禁检查 <span class="hint">方案文档必须挂接 @implements 需求编号（FR-41）</span></div>
+      <table>
+        <tr><th>方案文档</th><th>挂接需求</th><th>状态</th></tr>
+        <tr>
+          <td>技术方案 v1</td>
+          <td class="mono">@implements REQ-001, REQ-002</td>
+          <td><span class="badge badge-green">已挂接</span></td>
+        </tr>
+        <tr>
+          <td>架构设计说明</td>
+          <td class="text-2">（未挂接）</td>
+          <td><span class="badge badge-red">红灯 · 缺少挂接</span></td>
+        </tr>
+        <tr>
+          <td>数据库设计说明</td>
+          <td class="text-2">（未挂接）</td>
+          <td><span class="badge badge-red">红灯 · 缺少挂接</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

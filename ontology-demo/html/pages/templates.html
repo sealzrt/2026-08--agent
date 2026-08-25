@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>模板管理</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="content">
+
+  <div class="page-header">
+    <div>
+      <h1>模板管理</h1>
+      <div class="subtitle">Agent 的感知模板（FR-15/16）——模板字段锚定本体类/属性（grounding），Agent 才能将文档内容关联到推理</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="alert('新增模板（FR-16）')">+ 新增模板</button>
+      <button class="btn" onclick="alert('模板 JSON 导出（NFR-07，P1）')">导出 JSON</button>
+    </div>
+  </div>
+
+  <!-- 模板列表 -->
+  <div class="card">
+    <div class="card-title">模板列表 <span class="hint">共 5 类模板 · 合同模板为 P0</span></div>
+    <table>
+      <tr>
+        <th>模板</th>
+        <th>抽取来源</th>
+        <th>优先级</th>
+        <th>字段数</th>
+        <th>操作</th>
+      </tr>
+      <tr>
+        <td class="fw-600">合同模板 <span class="mono text-sm text-2">ContractExtractor</span></td>
+        <td class="text-sm text-2">规则式（关键词/正则）兜底（FR-17），LLM 增强可选（FR-18）</td>
+        <td><span class="badge badge-red">P0</span></td>
+        <td>8</td>
+        <td><button class="btn btn-sm" onclick="alert('编辑模板（FR-16）')">编辑</button></td>
+      </tr>
+      <tr>
+        <td>项目范围模板 <span class="mono text-sm text-2">ScopeExtractor</span></td>
+        <td class="text-sm text-2">同上</td>
+        <td><span class="badge badge-gray">P1</span></td>
+        <td>4</td>
+        <td><button class="btn btn-sm" onclick="alert('编辑模板（P1）')">编辑</button></td>
+      </tr>
+      <tr>
+        <td>功能清单模板 <span class="mono text-sm text-2">FeatureExtractor</span></td>
+        <td class="text-sm text-2">同上</td>
+        <td><span class="badge badge-gray">P1</span></td>
+        <td>4</td>
+        <td><button class="btn btn-sm" onclick="alert('编辑模板（P1）')">编辑</button></td>
+      </tr>
+      <tr>
+        <td>产品原型模板 <span class="mono text-sm text-2">PrototypeExtractor</span></td>
+        <td class="text-sm text-2">同上</td>
+        <td><span class="badge badge-gray">P1</span></td>
+        <td>3</td>
+        <td><button class="btn btn-sm" onclick="alert('编辑模板（P1）')">编辑</button></td>
+      </tr>
+      <tr>
+        <td>技术方案模板 <span class="mono text-sm text-2">SolutionExtractor</span></td>
+        <td class="text-sm text-2">同上</td>
+        <td><span class="badge badge-gray">P1</span></td>
+        <td>4</td>
+        <td><button class="btn btn-sm" onclick="alert('编辑模板（P1）')">编辑</button></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 合同模板详情 -->
+  <div class="card">
+    <div class="card-title">合同模板字段定义 <span class="hint">ContractExtractor · 字段 → 锚定本体（grounding）</span></div>
+    <table>
+      <tr><th>字段</th><th>锚定本体</th><th>抽取方式</th><th>示例值</th></tr>
+      <tr><td>合同编号</td><td class="mono">Contract.contract_no</td><td class="text-sm text-2">正则：HT-\d{4}-... </td><td class="mono text-sm">HT-2026-DEV-0823</td></tr>
+      <tr><td>甲方 / 乙方</td><td class="mono">Contract.party_a / party_b</td><td class="text-sm text-2">关键词 + 正则</td><td class="text-sm">摸鱼科技（有限）公司</td></tr>
+      <tr><td>交付范围</td><td class="mono">Contract.scope_text</td><td class="text-sm text-2">关键词：交付范围/功能承诺</td><td class="text-sm">P2 为尽力交付…</td></tr>
+      <tr><td>付款节点</td><td class="mono">Contract.payment_milestones</td><td class="text-sm text-2">正则：百分比 + 触发条件</td><td class="text-sm">5 期：15%/20%/25%/20%/20%</td></tr>
+      <tr><td>验收条款</td><td class="mono">Contract.has_acceptance_clause</td><td class="text-sm text-2">关键词：验收/交付标准</td><td class="text-sm">有 / 无</td></tr>
+      <tr><td>SLA 响应时限</td><td class="mono">Sla.response_time</td><td class="text-sm text-2">正则：\d+ 分钟内响应</td><td class="mono text-sm">30 分钟</td></tr>
+      <tr><td>质保期</td><td class="mono">Warranty.period</td><td class="text-sm text-2">正则：\d+ 个月</td><td class="mono text-sm">12 个月</td></tr>
+      <tr><td>范围外事项</td><td class="mono">Contract.excluded_items</td><td class="text-sm text-2">关键词：范围外/不含</td><td class="text-sm">5 项</td></tr>
+    </table>
+    <div class="text-sm text-2 mt-8">学习提示（P1）：驳回原因记录显示「付款节点」字段匹配率 78%，可考虑增加"签字为前提"关键词（共进化 FR-14）</div>
+  </div>
+
+</div>
+</body>
+</html>
