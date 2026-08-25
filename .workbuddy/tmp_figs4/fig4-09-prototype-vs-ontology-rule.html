@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:#ffffff}</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 310" width="100%" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <text x="340" y="26" text-anchor="middle" font-size="14" font-weight="bold" fill="#444441">同一句业务规则，两种存在形式</text>
+
+  <rect x="40" y="48" width="280" height="160" rx="10" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="180" y="74" text-anchor="middle" font-size="13" font-weight="bold" fill="#633806">产品原型里</text>
+  <rect x="60" y="90" width="240" height="52" rx="6" fill="#FFFFFF" stroke="#854F0B" stroke-width="1"/>
+  <text x="180" y="112" text-anchor="middle" font-size="11" fill="#633806">备注：延期超过 7 天</text>
+  <text x="180" y="130" text-anchor="middle" font-size="11" fill="#633806">要升级审批</text>
+  <text x="180" y="170" text-anchor="middle" font-size="11" fill="#854F0B">写在注释里 —— 给人读</text>
+  <text x="180" y="192" text-anchor="middle" font-size="11" fill="#5F5E5A">AI 没法从注释里推理</text>
+
+  <line x1="320" y1="128" x2="354" y2="128" stroke="#5F5E5A" stroke-width="1.5"/>
+  <polygon points="358,128 348,123 348,133" fill="#5F5E5A"/>
+  <text x="339" y="118" text-anchor="middle" font-size="11" fill="#5F5E5A">升级</text>
+
+  <rect x="360" y="48" width="280" height="160" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+  <text x="500" y="74" text-anchor="middle" font-size="13" font-weight="bold" fill="#3C3489">本体里</text>
+  <rect x="385" y="90" width="100" height="34" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="1"/>
+  <text x="435" y="111" text-anchor="middle" font-size="11" fill="#3C3489">延期 > 7天</text>
+  <line x1="485" y1="107" x2="515" y2="107" stroke="#534AB7" stroke-width="1.2"/>
+  <polygon points="518,107 510,103 510,111" fill="#534AB7"/>
+  <rect x="518" y="90" width="100" height="34" rx="6" fill="#FCEBEB" stroke="#A32D2D" stroke-width="1"/>
+  <text x="568" y="111" text-anchor="middle" font-size="11" fill="#791F1F">触发风险</text>
+  <text x="500" y="152" text-anchor="middle" font-size="11" fill="#534AB7">结构化声明 —— 机器可读</text>
+  <text x="500" y="174" text-anchor="middle" font-size="11" fill="#3C3489">AI 能顺着它推理、触发动作</text>
+  <text x="500" y="196" text-anchor="middle" font-size="11" fill="#5F5E5A">「延期>7天→风险」是一条声明</text>
+
+  <text x="340" y="240" text-anchor="middle" font-size="12" fill="#5F5E5A">原型的内容可以很全（界面+流程+规则），但那些规则是「给人看的注释」</text>
+  <text x="340" y="264" text-anchor="middle" font-size="12" fill="#5F5E5A">本体把这些规则变成「机器能用的声明」—— AI 拿后者才能推理</text>
+</svg>
+</body>
+</html>

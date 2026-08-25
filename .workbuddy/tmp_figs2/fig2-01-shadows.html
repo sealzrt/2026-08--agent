@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:#ffffff}</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 300" width="100%" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <text x="340" y="28" text-anchor="middle" font-size="14" font-weight="bold" fill="#444441">同一个供应商，在系统里到底是谁？</text>
+
+  <rect x="40" y="52" width="180" height="118" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+  <text x="130" y="80" text-anchor="middle" font-size="14" font-weight="bold" fill="#0C447C">数据库</text>
+  <line x1="60" y1="90" x2="200" y2="90" stroke="#85B7EB" stroke-width="0.5"/>
+  <text x="130" y="110" text-anchor="middle" font-size="13" fill="#185FA5">一行记录</text>
+  <text x="130" y="132" text-anchor="middle" font-size="12" font-family="Consolas,Menlo,monospace" fill="#0C447C">name=供应商</text>
+  <text x="130" y="150" text-anchor="middle" font-size="12" font-family="Consolas,Menlo,monospace" fill="#0C447C">电话、地址</text>
+  <text x="130" y="168" text-anchor="middle" font-size="11" fill="#5F5E5A">是数据，不是实体</text>
+
+  <rect x="250" y="52" width="180" height="118" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+  <text x="340" y="80" text-anchor="middle" font-size="14" font-weight="bold" fill="#085041">合同文档</text>
+  <line x1="270" y1="90" x2="410" y2="90" stroke="#5DCAA5" stroke-width="0.5"/>
+  <text x="340" y="110" text-anchor="middle" font-size="13" fill="#0F6E56">一个 PDF 文件名</text>
+  <text x="340" y="132" text-anchor="middle" font-size="12" font-family="Consolas,Menlo,monospace" fill="#085041">供应商合同.pdf</text>
+  <text x="340" y="150" text-anchor="middle" font-size="11" fill="#5F5E5A">是文件，不是实体</text>
+
+  <rect x="460" y="52" width="180" height="118" rx="10" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="550" y="80" text-anchor="middle" font-size="14" font-weight="bold" fill="#633806">业务系统</text>
+  <line x1="480" y1="90" x2="620" y2="90" stroke="#EF9F27" stroke-width="0.5"/>
+  <text x="550" y="110" text-anchor="middle" font-size="13" fill="#854F0B">一个编号</text>
+  <text x="550" y="132" text-anchor="middle" font-size="12" font-family="Consolas,Menlo,monospace" fill="#633806">SUP-1024</text>
+  <text x="550" y="150" text-anchor="middle" font-size="11" fill="#5F5E5A">是编号，不是实体</text>
+
+  <text x="235" y="120" text-anchor="middle" font-size="30" font-weight="bold" fill="#B4B2A9">?</text>
+  <text x="445" y="120" text-anchor="middle" font-size="30" font-weight="bold" fill="#B4B2A9">?</text>
+
+  <line x1="130" y1="170" x2="130" y2="200" stroke="#B4B2A9" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="340" y1="170" x2="340" y2="200" stroke="#B4B2A9" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="550" y1="170" x2="550" y2="200" stroke="#B4B2A9" stroke-width="0.8" stroke-dasharray="4 3"/>
+
+  <rect x="40" y="205" width="600" height="46" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="1"/>
+  <text x="340" y="223" text-anchor="middle" font-size="13" fill="#791F1F">系统存了三个「供应商」，却不知道它们是同一个</text>
+  <text x="340" y="242" text-anchor="middle" font-size="12" fill="#A32D2D">大概率不知道 —— 这就是问题所在</text>
+
+  <text x="340" y="280" text-anchor="middle" font-size="13" fill="#444441">本体论要做的：把三个影子，拼成一个「供应商」实体</text>
+</svg>
+</body>
+</html>

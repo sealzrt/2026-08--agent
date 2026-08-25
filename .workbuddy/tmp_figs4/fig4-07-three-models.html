@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:#ffffff}</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 330" width="100%" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <text x="340" y="26" text-anchor="middle" font-size="14" font-weight="bold" fill="#444441">三种"建模"，画的东西不一样</text>
+
+  <rect x="30" y="44" width="195" height="190" rx="10" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+  <text x="127" y="70" text-anchor="middle" font-size="13" font-weight="bold" fill="#444441">数据建模（ER 图）</text>
+  <rect x="55" y="86" width="145" height="72" rx="6" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="1"/>
+  <text x="127" y="104" text-anchor="middle" font-size="11" font-weight="bold" fill="#444441">合同表</text>
+  <line x1="55" y1="110" x2="200" y2="110" stroke="#B4B2A9" stroke-width="0.8"/>
+  <text x="127" y="126" text-anchor="middle" font-size="10" fill="#5F5E5A">id | 金额 | supplier_id</text>
+  <line x1="55" y1="132" x2="200" y2="132" stroke="#B4B2A9" stroke-width="0.8"/>
+  <text x="127" y="146" text-anchor="middle" font-size="10" fill="#5F5E5A">1 | 100万 | 5</text>
+  <text x="127" y="190" text-anchor="middle" font-size="11" font-weight="bold" fill="#5F5E5A">回答：数据怎么存</text>
+  <text x="127" y="212" text-anchor="middle" font-size="11" fill="#5F5E5A">谁看：程序员</text>
+
+  <rect x="245" y="44" width="195" height="190" rx="10" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="342" y="70" text-anchor="middle" font-size="13" font-weight="bold" fill="#633806">流程建模（BPMN）</text>
+  <rect x="260" y="88" width="74" height="30" rx="6" fill="#FFFFFF" stroke="#854F0B" stroke-width="1"/>
+  <text x="297" y="107" text-anchor="middle" font-size="10" fill="#633806">合同</text>
+  <line x1="334" y1="103" x2="350" y2="103" stroke="#854F0B" stroke-width="1.2"/>
+  <polygon points="352,103 344,99 344,107" fill="#854F0B"/>
+  <rect x="352" y="88" width="74" height="30" rx="6" fill="#FFFFFF" stroke="#854F0B" stroke-width="1"/>
+  <text x="389" y="107" text-anchor="middle" font-size="10" fill="#633806">审核</text>
+  <rect x="260" y="128" width="74" height="30" rx="6" fill="#FFFFFF" stroke="#854F0B" stroke-width="1"/>
+  <text x="297" y="147" text-anchor="middle" font-size="10" fill="#633806">关联项目</text>
+  <line x1="334" y1="143" x2="350" y2="143" stroke="#854F0B" stroke-width="1.2"/>
+  <polygon points="352,143 344,139 344,147" fill="#854F0B"/>
+  <rect x="352" y="128" width="74" height="30" rx="6" fill="#FFFFFF" stroke="#854F0B" stroke-width="1"/>
+  <text x="389" y="147" text-anchor="middle" font-size="10" fill="#633806">归档</text>
+  <text x="342" y="190" text-anchor="middle" font-size="11" font-weight="bold" fill="#854F0B">回答：事情怎么走</text>
+  <text x="342" y="212" text-anchor="middle" font-size="11" fill="#633806">谁看：业务分析、开发</text>
+
+  <rect x="460" y="44" width="195" height="190" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+  <text x="557" y="70" text-anchor="middle" font-size="13" font-weight="bold" fill="#3C3489">本体建模（本体论）</text>
+  <rect x="480" y="90" width="70" height="30" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="1"/>
+  <text x="515" y="109" text-anchor="middle" font-size="10" fill="#3C3489">合同</text>
+  <line x1="550" y1="105" x2="574" y2="105" stroke="#534AB7" stroke-width="1.2"/>
+  <polygon points="576,105 568,101 568,109" fill="#534AB7"/>
+  <rect x="576" y="90" width="70" height="30" rx="6" fill="#FFFFFF" stroke="#534AB7" stroke-width="1"/>
+  <text x="611" y="109" text-anchor="middle" font-size="10" fill="#3C3489">项目</text>
+  <rect x="500" y="130" width="120" height="30" rx="6" fill="#FCEBEB" stroke="#A32D2D" stroke-width="1"/>
+  <text x="560" y="149" text-anchor="middle" font-size="10" fill="#791F1F">规则：延期>7天→风险</text>
+  <text x="557" y="190" text-anchor="middle" font-size="11" font-weight="bold" fill="#534AB7">回答：世界怎么理解</text>
+  <text x="557" y="212" text-anchor="middle" font-size="11" fill="#3C3489">谁看：业务专家+程序员+AI</text>
+
+  <text x="340" y="266" text-anchor="middle" font-size="12" fill="#5F5E5A">同样是"合同"：数据建模画"存什么"，流程建模画"怎么走"，本体建模画"意味着什么"</text>
+  <text x="340" y="290" text-anchor="middle" font-size="12" fill="#5F5E5A">本体建的模型多一层"含义"和"规则"，而且机器（AI）也能读、能推理</text>
+</svg>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:#ffffff}</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 400" width="100%" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <text x="340" y="26" text-anchor="middle" font-size="14" font-weight="bold" fill="#444441">Agent 是一栋六层楼，本体是楼里的「施工图」</text>
+
+  <rect x="180" y="36" width="320" height="52" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+  <text x="340" y="58" text-anchor="middle" font-size="13" font-weight="bold" fill="#0C447C">交互层</text>
+  <text x="340" y="76" text-anchor="middle" font-size="11" fill="#185FA5">用户上传文件、提问</text>
+
+  <rect x="180" y="94" width="320" height="52" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+  <text x="340" y="116" text-anchor="middle" font-size="13" font-weight="bold" fill="#085041">编排层</text>
+  <text x="340" y="134" text-anchor="middle" font-size="11" fill="#0F6E56">干活主循环：规划→调用→检查</text>
+
+  <rect x="180" y="152" width="320" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="340" y="174" text-anchor="middle" font-size="13" font-weight="bold" fill="#633806">执行层</text>
+  <text x="340" y="192" text-anchor="middle" font-size="11" fill="#854F0B">调工具、跑接口</text>
+
+  <rect x="180" y="210" width="320" height="52" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1"/>
+  <text x="340" y="232" text-anchor="middle" font-size="13" font-weight="bold" fill="#712B13">记忆层</text>
+  <text x="340" y="250" text-anchor="middle" font-size="11" fill="#993C1D">存对话状态、便签纸</text>
+
+  <rect x="180" y="268" width="320" height="52" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="2"/>
+  <text x="340" y="290" text-anchor="middle" font-size="13" font-weight="bold" fill="#3C3489">语义层（本体）</text>
+  <text x="340" y="308" text-anchor="middle" font-size="11" fill="#534AB7">业务说明书：合同是啥、怎么连、什么情况会怎样</text>
+
+  <rect x="180" y="326" width="320" height="52" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+  <text x="340" y="348" text-anchor="middle" font-size="13" font-weight="bold" fill="#444441">基础设施层</text>
+  <text x="340" y="366" text-anchor="middle" font-size="11" fill="#5F5E5A">水电煤：LLM、数据库、消息队列</text>
+
+  <line x1="500" y1="294" x2="545" y2="294" stroke="#534AB7" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="545" y1="294" x2="545" y2="120" stroke="#534AB7" stroke-width="1" stroke-dasharray="4 3"/>
+  <polygon points="545,118 541,126 549,126" fill="#534AB7"/>
+  <line x1="545" y1="294" x2="545" y2="178" stroke="#534AB7" stroke-width="1" stroke-dasharray="4 3"/>
+  <polygon points="545,176 541,184 549,184" fill="#534AB7"/>
+  <line x1="545" y1="294" x2="545" y2="236" stroke="#534AB7" stroke-width="1" stroke-dasharray="4 3"/>
+  <polygon points="545,234 541,242 549,242" fill="#534AB7"/>
+  <text x="565" y="130" font-size="11" fill="#534AB7">递说明书</text>
+  <text x="565" y="188" font-size="11" fill="#534AB7">给楼上各层</text>
+
+  <line x1="180" y1="352" x2="120" y2="352" stroke="#888780" stroke-width="1"/>
+  <line x1="120" y1="352" x2="120" y2="60" stroke="#888780" stroke-width="1" stroke-dasharray="4 3"/>
+  <polygon points="120,58 116,66 124,66" fill="#888780"/>
+  <text x="90" y="200" text-anchor="middle" font-size="11" fill="#5F5E5A" transform="rotate(-90 90 200)">用户从这进来</text>
+
+  <text x="340" y="394" text-anchor="middle" font-size="12" fill="#5F5E5A">语义层不直接见用户，但给楼上每个干活模块递「说明书」；基础设施层是底子</text>
+</svg>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:#ffffff}</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 340" width="100%" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+  <text x="130" y="28" text-anchor="middle" font-size="14" font-weight="bold" fill="#444441">继承</text>
+  <text x="340" y="28" text-anchor="middle" font-size="14" font-weight="bold" fill="#444441">基数</text>
+  <text x="550" y="28" text-anchor="middle" font-size="14" font-weight="bold" fill="#444441">多跳</text>
+
+  <rect x="40" y="44" width="180" height="276" rx="10" fill="none" stroke="#B4B2A9" stroke-width="1"/>
+  <rect x="250" y="44" width="180" height="276" rx="10" fill="none" stroke="#B4B2A9" stroke-width="1"/>
+  <rect x="460" y="44" width="180" height="276" rx="10" fill="none" stroke="#B4B2A9" stroke-width="1"/>
+
+  <text x="130" y="74" text-anchor="middle" font-size="12" fill="#5F5E5A">一种东西是另一种的「种类」</text>
+  <rect x="85" y="88" width="90" height="30" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+  <text x="130" y="107" text-anchor="middle" font-size="12" fill="#0C447C">业务对象</text>
+  <line x1="130" y1="118" x2="130" y2="142" stroke="#185FA5" stroke-width="1"/>
+  <polygon points="130,144 126,138 134,138" fill="#185FA5"/>
+  <rect x="85" y="144" width="90" height="30" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+  <text x="130" y="163" text-anchor="middle" font-size="12" fill="#0C447C">合同</text>
+  <line x1="130" y1="174" x2="130" y2="196" stroke="#185FA5" stroke-width="1"/>
+  <line x1="130" y1="196" x2="74" y2="196" stroke="#185FA5" stroke-width="1"/>
+  <line x1="130" y1="196" x2="186" y2="196" stroke="#185FA5" stroke-width="1"/>
+  <polygon points="74,198 78,192 70,192" fill="#185FA5"/>
+  <polygon points="186,198 190,192 182,192" fill="#185FA5"/>
+  <rect x="48" y="200" width="80" height="30" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+  <text x="88" y="219" text-anchor="middle" font-size="11" fill="#085041">供应商合同</text>
+  <rect x="132" y="200" width="80" height="30" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+  <text x="172" y="219" text-anchor="middle" font-size="11" fill="#085041">采购合同</text>
+  <text x="130" y="262" text-anchor="middle" font-size="11" fill="#5F5E5A">都是「合同」的一种</text>
+
+  <text x="340" y="74" text-anchor="middle" font-size="12" fill="#5F5E5A">一头能连几头（数量限制）</text>
+  <rect x="258" y="92" width="82" height="32" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+  <text x="299" y="112" text-anchor="middle" font-size="12" fill="#085041">项目</text>
+  <line x1="340" y1="108" x2="400" y2="108" stroke="#0F6E56" stroke-width="1"/>
+  <polygon points="402,108 394,104 394,112" fill="#0F6E56"/>
+  <text x="371" y="100" text-anchor="middle" font-size="11" font-weight="bold" fill="#0F6E56">1 — n</text>
+  <rect x="402" y="92" width="82" height="32" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+  <text x="443" y="112" text-anchor="middle" font-size="12" fill="#085041">合同</text>
+  <text x="340" y="142" text-anchor="middle" font-size="11" fill="#5F5E5A">一个项目有很多合同</text>
+
+  <rect x="258" y="176" width="82" height="32" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="299" y="196" text-anchor="middle" font-size="12" fill="#633806">合同</text>
+  <line x1="340" y1="192" x2="400" y2="192" stroke="#854F0B" stroke-width="1"/>
+  <polygon points="402,192 394,188 394,196" fill="#854F0B"/>
+  <text x="371" y="184" text-anchor="middle" font-size="11" font-weight="bold" fill="#854F0B">1 — 1</text>
+  <rect x="402" y="176" width="82" height="32" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="443" y="196" text-anchor="middle" font-size="12" fill="#633806">项目</text>
+  <text x="340" y="226" text-anchor="middle" font-size="11" fill="#5F5E5A">一份合同只约束一个项目</text>
+
+  <text x="550" y="74" text-anchor="middle" font-size="12" fill="#5F5E5A">顺着关系链走好几步</text>
+  <rect x="500" y="90" width="100" height="28" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="550" y="108" text-anchor="middle" font-size="12" fill="#633806">合同</text>
+  <line x1="550" y1="118" x2="550" y2="128" stroke="#854F0B" stroke-width="1"/>
+  <polygon points="550,130 546,124 554,124" fill="#854F0B"/>
+  <rect x="500" y="130" width="100" height="28" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="550" y="148" text-anchor="middle" font-size="12" fill="#633806">约束</text>
+  <line x1="550" y1="158" x2="550" y2="168" stroke="#854F0B" stroke-width="1"/>
+  <polygon points="550,170 546,164 554,164" fill="#854F0B"/>
+  <rect x="500" y="170" width="100" height="28" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="550" y="188" text-anchor="middle" font-size="12" fill="#633806">项目</text>
+  <line x1="550" y1="198" x2="550" y2="208" stroke="#854F0B" stroke-width="1"/>
+  <polygon points="550,210 546,204 554,204" fill="#854F0B"/>
+  <rect x="500" y="210" width="100" height="28" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="550" y="228" text-anchor="middle" font-size="12" fill="#633806">包含</text>
+  <line x1="550" y1="238" x2="550" y2="248" stroke="#854F0B" stroke-width="1"/>
+  <polygon points="550,250 546,244 554,244" fill="#854F0B"/>
+  <rect x="500" y="250" width="100" height="28" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+  <text x="550" y="268" text-anchor="middle" font-size="12" fill="#633806">里程碑</text>
+  <text x="624" y="180" text-anchor="middle" font-size="12" font-weight="bold" fill="#854F0B">4 跳</text>
+  <text x="550" y="306" text-anchor="middle" font-size="11" fill="#5F5E5A">四步问出「合同影响哪个里程碑」</text>
+</svg>
+</body>
+</html>
